@@ -17,7 +17,7 @@
     <string name="action_settings">Settings</string>
 
     <!-- Labels -->
-    <string name="latlong">Lat/Long:</string>
+    <string name="latlng">Lat/Long:</string>
     <string name="address">Address:</string>
 
     <!-- Messages -->

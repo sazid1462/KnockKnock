@@ -24,7 +24,7 @@ public class LocationDetector extends Activity implements
     /**
      * Contains the current location
      */
-    private Location mLocation;
+    private static Location mLocation;
 
     /**
      * Location client for handling location requests
@@ -51,6 +51,9 @@ public class LocationDetector extends Activity implements
      */
     private boolean mIsInResolution;
 
+    public static Location getCurrentLocation(){
+        return mLocation;
+    }
     /**
      * Called when the activity is starting. Restores the activity state.
      */
@@ -129,8 +132,7 @@ public class LocationDetector extends Activity implements
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "GoogleApiClient connected");
-        // TODO: Start making API requests.
-        onLocationChanged();
+        onLocationChanged(mLocationClient.getLastLocation());
     }
 
     /**

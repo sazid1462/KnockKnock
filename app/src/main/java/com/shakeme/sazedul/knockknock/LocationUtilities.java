@@ -7,6 +7,7 @@ package com.shakeme.sazedul.knockknock;
 import android.content.Context;
 import android.location.Location;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.shakeme.sazedul.knockknock.R;
 
 /**
@@ -61,7 +62,7 @@ public final class LocationUtilities {
      * @return The latitude and longitude of the current location, or null if no
      * location is available.
      */
-    public static String getLatLng(Context context, Location currentLocation) {
+    public static String getLatLngString(Context context, Location currentLocation) {
         // If the location is valid
         if (currentLocation != null) {
 
@@ -74,6 +75,19 @@ public final class LocationUtilities {
 
             // Otherwise, return the empty string
             return EMPTY_STRING;
+        }
+    }
+
+    public static LatLng getLatLng(Location currentLocation) {
+        // If the location is valid
+        if (currentLocation != null) {
+
+            // Return the latitude and longitude as strings
+            return new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+        } else {
+
+            // Otherwise, return the empty string
+            return new LatLng(0, 0);
         }
     }
 }
