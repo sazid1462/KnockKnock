@@ -1,30 +1,23 @@
 package com.shakeme.sazedul.knockknock;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.location.LocationListener;
 
 
-public class LocationDetector extends Activity implements
-        LocationListener,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
-
-    /**
-     * Contains the current location
-     */
-    private static Location mLocation;
+public class LocationDetector extends FragmentActivity implements
+        GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener {
 
     /**
      * Location client for handling location requests
@@ -41,19 +34,15 @@ public class LocationDetector extends Activity implements
     protected static final int REQUEST_CODE_RESOLUTION = 1;
 
     /**
-     * Google API client.
-     */
-    private GoogleApiClient mGoogleApiClient;
-
-    /**
      * Determines if the client is in a resolution state, and
      * waiting for resolution intent to return.
      */
     private boolean mIsInResolution;
 
-    public static Location getCurrentLocation(){
-        return mLocation;
+    public Location getCurrentLocation(){
+        return mLocationClient.getLastLocation();
     }
+
     /**
      * Called when the activity is starting. Restores the activity state.
      */
@@ -63,6 +52,7 @@ public class LocationDetector extends Activity implements
         if (savedInstanceState != null) {
             mIsInResolution = savedInstanceState.getBoolean(KEY_IN_RESOLUTION, false);
         }
+        mLocationClient = new LocationClient(this, this, this);
     }
 
     /**
@@ -75,14 +65,10 @@ public class LocationDetector extends Activity implements
     @Override
     protected void onStart() {
         super.onStart();
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    // Optionally, add additional APIs and scopes if required.
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
+        if (mLocationClient == null) {
+            mLocationClient = new LocationClient(this, this, this);
         }
-        mGoogleApiClient.connect();
+        mLocationClient.connect();
     }
 
     /**
@@ -91,8 +77,8 @@ public class LocationDetector extends Activity implements
      */
     @Override
     protected void onStop() {
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.disconnect();
+        if (mLocationClient != null) {
+            mLocationClient.disconnect();
         }
         super.onStop();
     }
@@ -121,8 +107,8 @@ public class LocationDetector extends Activity implements
 
     private void retryConnecting() {
         mIsInResolution = false;
-        if (!mGoogleApiClient.isConnecting()) {
-            mGoogleApiClient.connect();
+        if (!mLocationClient.isConnecting()) {
+            mLocationClient.connect();
         }
     }
 
@@ -131,17 +117,12 @@ public class LocationDetector extends Activity implements
      */
     @Override
     public void onConnected(Bundle connectionHint) {
-        Log.i(TAG, "GoogleApiClient connected");
-        onLocationChanged(mLocationClient.getLastLocation());
+        Log.i(TAG, "LocationClient connected");
     }
 
-    /**
-     * Called when {@code mGoogleApiClient} connection is suspended.
-     */
     @Override
-    public void onConnectionSuspended(int cause) {
-        Log.i(TAG, "GoogleApiClient connection suspended");
-        retryConnecting();
+    public void onDisconnected() {
+        Log.i(TAG, "LocationClient disconnected");
     }
 
     /**
@@ -176,10 +157,5 @@ public class LocationDetector extends Activity implements
             Log.e(TAG, "Exception while starting resolution activity", e);
             retryConnecting();
         }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        mLocation = location;
     }
 }

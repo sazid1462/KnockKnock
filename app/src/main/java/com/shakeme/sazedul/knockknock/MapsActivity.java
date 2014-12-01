@@ -1,18 +1,18 @@
 package com.shakeme.sazedul.knockknock;
 
 import android.location.Location;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity {
+public class MapsActivity extends LocationDetector implements LocationListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private LatLng curLatLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,15 +63,21 @@ public class MapsActivity extends FragmentActivity {
      */
     private void setUpMap() {
         //mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
-        Location curLocation = LocationDetector.getCurrentLocation();
-        LatLng curLatLng = LocationUtilities.getLatLng(curLocation);
+        //curLatLng = LocationUtilities.getLatLng(getCurrentLocation());
 
         mMap.setMyLocationEnabled(true);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 13));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 13));
+        mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
+            @Override
+            public void onMyLocationChange(Location location) {
+                onLocationChanged(location);
+            }
+        });
+    }
 
-        mMap.addMarker(new MarkerOptions()
-                .title("You")
-                .snippet("Your current location.")
-                .position(curLatLng));
+    @Override
+    public void onLocationChanged(Location location) {
+        curLatLng = LocationUtilities.getLatLng(getCurrentLocation());
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 16));
     }
 }
