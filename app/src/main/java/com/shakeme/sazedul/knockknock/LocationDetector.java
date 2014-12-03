@@ -1,5 +1,7 @@
 package com.shakeme.sazedul.knockknock;
 
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
@@ -12,17 +14,38 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.Vector;
 
 
 public class LocationDetector extends FragmentActivity implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {
 
-    /**
-     * Location client for handling location requests
-     */
-    private LocationClient mLocationClient;
+    // Milliseconds per second
+    private static final int MILLISECONDS_PER_SECOND = 1000;
+    // Update frequency in seconds
+    public static final int UPDATE_INTERVAL_IN_SECONDS_ONSTOP = 10;
+    // Update frequency in seconds
+    public static final int UPDATE_INTERVAL_IN_SECONDS_ONSTART = 5;
+    // Update frequency in milliseconds when the app is running in background
+    private static final long UPDATE_INTERVAL_ONSTOP = MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS_ONSTOP;
+    // Update frequency in milliseconds when the app is visible
+    private static final long UPDATE_INTERVAL_ONSTART = MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS_ONSTART;
+    // The fastest update frequency, in seconds when visible
+    private static final int FASTEST_INTERVAL_IN_SECONDS_ONSTART = 1;
+    // A fast frequency ceiling in milliseconds when visible
+    private static final long FASTEST_INTERVAL_ONSTART =
+            MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS_ONSTART;
+    // The fastest update frequency, in seconds when not visible
+    private static final int FASTEST_INTERVAL_IN_SECONDS_ONSTOP = 5;
+    // A fast frequency ceiling in milliseconds when not visible
+    private static final long FASTEST_INTERVAL_ONSTOP =
+            MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS_ONSTOP;
 
     private static final String TAG = "LocationDetector";
 
@@ -32,6 +55,39 @@ public class LocationDetector extends FragmentActivity implements
      * Request code for auto Google Play Services error resolution.
      */
     protected static final int REQUEST_CODE_RESOLUTION = 1;
+
+    // Define an object that holds accuracy and frequency parameters
+    LocationRequest mLocationRequest;
+
+    /**
+     * Location client for handling location requests
+     */
+    private LocationClient mLocationClient;
+
+    /**
+     * List of Geofences
+     */
+    private Vector<Geofence> listGeofences;
+
+    // Define a DialogFragment that displays the error dialog
+    public static class ErrorDialogFragment extends DialogFragment {
+        // Global field to contain the error dialog
+        private Dialog mDialog;
+        // Default constructor. Sets the dialog field to null
+        public ErrorDialogFragment() {
+            super();
+            mDialog = null;
+        }
+        // Set the dialog to display
+        public void setDialog(Dialog dialog) {
+            mDialog = dialog;
+        }
+        // Return a Dialog to the DialogFragment.
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return mDialog;
+        }
+    }
 
     /**
      * Determines if the client is in a resolution state, and
@@ -53,6 +109,9 @@ public class LocationDetector extends FragmentActivity implements
             mIsInResolution = savedInstanceState.getBoolean(KEY_IN_RESOLUTION, false);
         }
         mLocationClient = new LocationClient(this, this, this);
+
+        // Create the LocationRequest object
+        mLocationRequest = LocationRequest.create();
     }
 
     /**
@@ -69,6 +128,14 @@ public class LocationDetector extends FragmentActivity implements
             mLocationClient = new LocationClient(this, this, this);
         }
         mLocationClient.connect();
+
+        // Use high accuracy
+        mLocationRequest.setPriority(
+                LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // Set the update interval to 5 seconds
+        mLocationRequest.setInterval(UPDATE_INTERVAL_ONSTART);
+        // Set the fastest update interval to 1 second
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL_ONSTART);
     }
 
     /**
@@ -80,6 +147,14 @@ public class LocationDetector extends FragmentActivity implements
         if (mLocationClient != null) {
             mLocationClient.disconnect();
         }
+        // Use high accuracy
+        mLocationRequest.setPriority(
+                LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        // Set the update interval to 5 seconds
+        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_SECONDS_ONSTOP);
+        // Set the fastest update interval to 1 second
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL_IN_SECONDS_ONSTOP);
+
         super.onStop();
     }
 
@@ -123,16 +198,17 @@ public class LocationDetector extends FragmentActivity implements
     @Override
     public void onDisconnected() {
         Log.i(TAG, "LocationClient disconnected");
+
     }
 
     /**
-     * Called when {@code mGoogleApiClient} is trying to connect but failed.
+     * Called when {@code mGooglePlayServicesClient} is trying to connect but failed.
      * Handle {@code result.getResolution()} if there is a resolution
      * available.
      */
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-        Log.i(TAG, "GoogleApiClient connection failed: " + result.toString());
+        Log.i(TAG, "GooglePlayServicesClient connection failed: " + result.toString());
         if (!result.hasResolution()) {
             // Show a localized error dialog.
             GooglePlayServicesUtil.getErrorDialog(
@@ -157,5 +233,14 @@ public class LocationDetector extends FragmentActivity implements
             Log.e(TAG, "Exception while starting resolution activity", e);
             retryConnecting();
         }
+    }
+
+    public void addGeofence(LatLng latLng){
+        listGeofences.add(new Geofence() {
+            @Override
+            public String getRequestId() {
+                return null; // TODO
+            }
+        });
     }
 }

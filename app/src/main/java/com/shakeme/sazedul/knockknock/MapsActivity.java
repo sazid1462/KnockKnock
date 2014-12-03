@@ -2,12 +2,13 @@ package com.shakeme.sazedul.knockknock;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapsActivity extends LocationDetector implements LocationListener {
 
@@ -70,14 +71,22 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
             @Override
             public void onMyLocationChange(Location location) {
-                onLocationChanged(location);
+                mMap.addPolyline(new PolylineOptions().add(LocationUtilities.getLatLng(location)));
+            }
+        });
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                // TODO
             }
         });
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        curLatLng = LocationUtilities.getLatLng(getCurrentLocation());
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 16));
+        String msg = "Updated Location: " +
+                LocationUtilities.getLatLngString(this, location);
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }
