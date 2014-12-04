@@ -1,19 +1,16 @@
 package com.shakeme.sazedul.knockknock;
 
-import android.location.Location;
+import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.widget.Toast;
 
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends LocationDetector implements LocationListener {
+public class MapsActivity extends FragmentActivity {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-    private LatLng curLatLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,30 +60,6 @@ public class MapsActivity extends LocationDetector implements LocationListener {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        //mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
-        //curLatLng = LocationUtilities.getLatLng(getCurrentLocation());
-
-        mMap.setMyLocationEnabled(true);
-        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 13));
-        mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
-            @Override
-            public void onMyLocationChange(Location location) {
-                mMap.addPolyline(new PolylineOptions().add(LocationUtilities.getLatLng(location)));
-            }
-        });
-
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                // TODO
-            }
-        });
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        String msg = "Updated Location: " +
-                LocationUtilities.getLatLngString(this, location);
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
     }
 }

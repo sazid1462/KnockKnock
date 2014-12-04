@@ -49,8 +49,9 @@
     <string name="request_location_updates_in_progress">Can\'t request location updates, previous request hasn\'t finished</string>
     <string name="unknown">--Unknown--</string>
     <string name="unknown_activity_request_code">Received an unknown activity request code %1$d in onActivityResult.</string>
-    <string name="lbl_retrieving">Retrieving...</string>
+    <string name="lbl_retrieving">Retrieving…</string>
     <string name="lbl_current_location">Current location:</string>
     <string name="btn_add_geofences">Add New Reminder</string>
+    <string name="btn_show_geofences">Show Reminder(s)</string>
 
 </resources>

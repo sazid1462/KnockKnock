@@ -2,10 +2,12 @@ package com.shakeme.sazedul.knockknock;
 
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -57,12 +59,15 @@ public class LocationDetector extends FragmentActivity implements
     protected static final int REQUEST_CODE_RESOLUTION = 1;
 
     // Define an object that holds accuracy and frequency parameters
-    LocationRequest mLocationRequest;
-
+    protected LocationRequest mLocationRequest;
+    protected boolean mUpdatesRequested;
     /**
      * Location client for handling location requests
      */
-    private LocationClient mLocationClient;
+    protected LocationClient mLocationClient;
+
+    SharedPreferences mPrefs;
+    SharedPreferences.Editor mEditor;
 
     /**
      * List of Geofences
@@ -96,7 +101,9 @@ public class LocationDetector extends FragmentActivity implements
     private boolean mIsInResolution;
 
     public Location getCurrentLocation(){
-        return mLocationClient.getLastLocation();
+        if (mLocationClient != null)
+            return mLocationClient.getLastLocation();
+        else return null;
     }
 
     /**
@@ -129,6 +136,36 @@ public class LocationDetector extends FragmentActivity implements
         }
         mLocationClient.connect();
 
+        // Open the shared preferences
+        mPrefs = getSharedPreferences("SharedPreferences",
+                Context.MODE_PRIVATE);
+        // Get a SharedPreferences editor
+        mEditor = mPrefs.edit();
+    }
+
+    @Override
+    protected void onPause() {
+        // Save the current setting for updates
+        mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
+        mEditor.commit();
+
+        // Use high accuracy
+        mLocationRequest.setPriority(
+                LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        // Set the update interval to 10 seconds
+        mLocationRequest.setInterval(UPDATE_INTERVAL_ONSTOP);
+        // Set the fastest update interval to 5 second
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL_ONSTOP);
+
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Start with updates turned off
+        mUpdatesRequested = false;
+
         // Use high accuracy
         mLocationRequest.setPriority(
                 LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -136,6 +173,19 @@ public class LocationDetector extends FragmentActivity implements
         mLocationRequest.setInterval(UPDATE_INTERVAL_ONSTART);
         // Set the fastest update interval to 1 second
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL_ONSTART);
+        /*
+         * Get any previous setting for location updates
+         * Gets "false" if an error occurs
+         */
+        if (mPrefs.contains("KEY_UPDATES_ON")) {
+            mUpdatesRequested =
+                    mPrefs.getBoolean("KEY_UPDATES_ON", false);
+
+            // Otherwise, turn off location updates
+        } else {
+            mEditor.putBoolean("KEY_UPDATES_ON", false);
+            mEditor.commit();
+        }
     }
 
     /**
@@ -147,14 +197,6 @@ public class LocationDetector extends FragmentActivity implements
         if (mLocationClient != null) {
             mLocationClient.disconnect();
         }
-        // Use high accuracy
-        mLocationRequest.setPriority(
-                LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        // Set the update interval to 5 seconds
-        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_SECONDS_ONSTOP);
-        // Set the fastest update interval to 1 second
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL_IN_SECONDS_ONSTOP);
-
         super.onStop();
     }
 

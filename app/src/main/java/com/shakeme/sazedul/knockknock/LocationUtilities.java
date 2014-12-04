@@ -62,15 +62,12 @@ public final class LocationUtilities {
      * @return The latitude and longitude of the current location, or null if no
      * location is available.
      */
-    public static String getLatLngString(Context context, Location currentLocation) {
+    public static String getLatLngString(Location currentLocation) {
         // If the location is valid
         if (currentLocation != null) {
 
             // Return the latitude and longitude as strings
-            return context.getString(
-                    R.string.latitude_longitude,
-                    currentLocation.getLatitude(),
-                    currentLocation.getLongitude());
+            return new String(Double.toString(currentLocation.getLatitude()) + " , " + Double.toString(currentLocation.getLongitude()));
         } else {
 
             // Otherwise, return the empty string
