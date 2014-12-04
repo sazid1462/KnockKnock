@@ -2,8 +2,8 @@
 <resources>
 
     <string name="app_name">Knock Knock</string>
-    <string name="title_activity_maps">Map</string>
-    <string name="title_activity_location_detector">LocationDetector</string>
+    <string name="title_activity_maps">Knock Knock</string>
+    <string name="title_activity_location_detector">Location Detector</string>
 
     <!-- User interface labels and strings -->
 
@@ -49,5 +49,8 @@
     <string name="request_location_updates_in_progress">Can\'t request location updates, previous request hasn\'t finished</string>
     <string name="unknown">--Unknown--</string>
     <string name="unknown_activity_request_code">Received an unknown activity request code %1$d in onActivityResult.</string>
+    <string name="lbl_retrieving">Retrieving...</string>
+    <string name="lbl_current_location">Current location:</string>
+    <string name="btn_add_geofences">Add New Reminder</string>
 
 </resources>
