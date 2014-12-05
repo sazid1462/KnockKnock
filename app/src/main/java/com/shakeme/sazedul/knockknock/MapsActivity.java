@@ -5,6 +5,7 @@ package com.shakeme.sazedul.knockknock;
  **/
 
 import android.content.Context;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -22,6 +23,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.IOException;
@@ -136,8 +138,12 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
             @Override
             public void onMyLocationChange(Location location) {
-                mMap.addPolyline(new PolylineOptions().add(LocationUtilities.getLatLng(location)));
+                Polyline line = mMap.addPolyline(new PolylineOptions()
+                        .add(LocationUtilities.getLatLng(location))
+                        .width(5)
+                        .color(Color.RED));
                 getAddress();
+
             }
         });
 
@@ -152,8 +158,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        String msg = "Updated Location: " +
-                LocationUtilities.getLatLngString(location);
+        String msg = "Updated Location: " + LocationUtilities.getLatLngString(location);
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         //getAddress();
     }
