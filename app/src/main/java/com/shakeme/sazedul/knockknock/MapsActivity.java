@@ -1,5 +1,9 @@
 package com.shakeme.sazedul.knockknock;
 
+/***
+ * Created by Sazedul on 01-Dec-14.
+ **/
+
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -210,7 +214,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
          * Get a Geocoder instance, get the latitude and longitude
          * look up the address, and return it
          *
-         * @params params One or more Location objects
+         * @param params One or more Location objects
          * @return A string containing the address of the current
          * location, or an empty string if no address can be found,
          * or an error message
@@ -221,7 +225,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
             // Get the current location from the input parameter list
             Location loc = params[0];
             // Create a list to contain the result address
-            List<Address> addresses = null;
+            List<Address> addresses;
             try {
                 /*
                  * Return 1 address.
@@ -251,7 +255,8 @@ public class MapsActivity extends LocationDetector implements LocationListener {
                  * Format the first line of address (if available),
                  * city, and country name.
                  */
-                String addressText = String.format(
+                // Return the text
+                return String.format(
                         "%s, %s, %s",
                         // If there's a street address, add it
                         address.getMaxAddressLineIndex() > 0 ?
@@ -260,8 +265,6 @@ public class MapsActivity extends LocationDetector implements LocationListener {
                         address.getLocality(),
                         // The country of the address
                         address.getCountryName());
-                // Return the text
-                return addressText;
             } else {
                 return "No address found";
             }

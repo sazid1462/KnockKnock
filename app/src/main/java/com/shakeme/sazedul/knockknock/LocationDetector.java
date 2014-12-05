@@ -1,7 +1,9 @@
 package com.shakeme.sazedul.knockknock;
 
-import android.app.Dialog;
-import android.app.DialogFragment;
+/***
+ * Created by Sazedul on 01-Dec-14.
+ **/
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
@@ -74,7 +76,7 @@ public class LocationDetector extends FragmentActivity implements
      */
     private Vector<Geofence> listGeofences;
 
-    // Define a DialogFragment that displays the error dialog
+    /*** Define a DialogFragment that displays the error dialog
     public static class ErrorDialogFragment extends DialogFragment {
         // Global field to contain the error dialog
         private Dialog mDialog;
@@ -93,6 +95,7 @@ public class LocationDetector extends FragmentActivity implements
             return mDialog;
         }
     }
+    **/
 
     /**
      * Determines if the client is in a resolution state, and
@@ -141,6 +144,7 @@ public class LocationDetector extends FragmentActivity implements
                 Context.MODE_PRIVATE);
         // Get a SharedPreferences editor
         mEditor = mPrefs.edit();
+        mEditor.apply();
     }
 
     @Override
