@@ -4,13 +4,9 @@ package com.shakeme.sazedul.knockknock;
  * Created by Sazedul on 01-Dec-14.
  **/
 
-import android.content.Context;
-import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
+import android.app.ProgressDialog;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -23,12 +19,6 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 
 public class MapsActivity extends LocationDetector implements LocationListener {
 
@@ -38,6 +28,32 @@ public class MapsActivity extends LocationDetector implements LocationListener {
     private TextView mCurrentLocation;
     private ProgressBar mActivityIndicator;
 
+    // flag for Internet connection status
+    Boolean isInternetPresent = false;
+
+    // Connection detector class
+    NetworkConnectivityDetector nCDetector;
+
+    // Alert Dialog Manager
+    MessageDialogueViewer alert = new MessageDialogueViewer();
+
+    // Google Places
+    GooglePlaces googlePlaces;
+
+    // Places List
+    PlaceList nearPlaces;
+
+    // Progress dialog
+    ProgressDialog pDialog;
+
+    // ListItems data
+    Place place;
+
+    // KEY Strings
+    public static String KEY_REFERENCE = "reference"; // id of the place
+    public static String KEY_NAME = "name"; // name of the place
+    public static String KEY_VICINITY = "vicinity"; // Place area name
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,10 +62,12 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         mCurrentLocation = (TextView) findViewById(R.id.txt_current_location);
         mActivityIndicator = (ProgressBar) findViewById(R.id.cur_location_progress);
         Button mAddNew = (Button)findViewById(R.id.btn_add_geofences);
+        nCDetector = new NetworkConnectivityDetector(getApplicationContext());
+
         mAddNew.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                // TODO
             }
         });
     }
@@ -75,6 +93,16 @@ public class MapsActivity extends LocationDetector implements LocationListener {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Check if Internet present
+        isInternetPresent = nCDetector.isConnectionToInternetAvailable();
+        if (!isInternetPresent) {
+            // Internet Connection is not present
+            alert.showAlertDialog(this, "Internet Connection Error",
+                    "Please connect to the Internet", false);
+            // stop executing code by return
+            return;
+        }
         setUpMapIfNeeded();
     }
 
@@ -138,12 +166,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
             @Override
             public void onMyLocationChange(Location location) {
-                Polyline line = mMap.addPolyline(new PolylineOptions()
-                        .add(LocationUtilities.getLatLng(location))
-                        .width(5)
-                        .color(Color.RED));
-                getAddress();
-
+                new LoadPlaces().execute();
             }
         });
 
@@ -163,116 +186,82 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         //getAddress();
     }
 
-    /**
-     * The "Get Address" button in the UI is defined with
-     * android:onClick="getAddress". The method is invoked whenever the
-     * user clicks the button.
-     *
-     */
-    public void getAddress() {
-        // Ensure that a Geocoder services is available
-        if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) && Geocoder.isPresent()) {
-            // Show the activity indicator
+    class LoadPlaces extends AsyncTask<String, String, String> {
+
+        /**
+         * Before starting background thread Show Progress Dialog
+         * */
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
             mActivityIndicator.setVisibility(View.VISIBLE);
-            /*
-             * Reverse geocoding is long-running and synchronous.
-             * Run it on a background thread.
-             * Pass the current location to the background task.
-             * When the task finishes,
-             * onPostExecute() displays the address.
-             */
-            (new GetAddressTask(this)).execute(getCurrentLocation());
-        }
-        else mCurrentLocation.setText(LocationUtilities.getLatLngString(getCurrentLocation()));
-    }
-
-    /**
-     * A subclass of AsyncTask that calls getFromLocation() in the
-     * background. The class definition has these generic types:
-     * Location - A Location object containing
-     * the current location.
-     * Void     - indicates that progress units are not used
-     * String   - An address passed to onPostExecute()
-     */
-    private class GetAddressTask extends AsyncTask<Location, Void, String> {
-        Context mContext;
-        public GetAddressTask(Context context) {
-            super();
-            mContext = context;
         }
 
         /**
-         * A method that's called once doInBackground() completes. Turn
-         * off the indeterminate activity indicator and set
-         * the text of the UI element that shows the address. If the
-         * lookup failed, display the error message.
-         */
-        @Override
-        protected void onPostExecute(String address) {
-            // Set activity indicator visibility to "gone"
-            mActivityIndicator.setVisibility(View.GONE);
-            // Display the results of the lookup.
-            mCurrentLocation.setText(address);
-        }
+         * getting Places JSON
+         * */
+        protected String doInBackground(String... args) {
+            // creating Places class object
+            googlePlaces = new GooglePlaces();
 
-        /**
-         * Get a Geocoder instance, get the latitude and longitude
-         * look up the address, and return it
-         *
-         * @param params One or more Location objects
-         * @return A string containing the address of the current
-         * location, or an empty string if no address can be found,
-         * or an error message
-         */
-        @Override
-        protected String doInBackground(Location... params) {
-            Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
-            // Get the current location from the input parameter list
-            Location loc = params[0];
-            // Create a list to contain the result address
-            List<Address> addresses;
             try {
-                /*
-                 * Return 1 address.
-                 */
-                addresses = geocoder.getFromLocation(loc.getLatitude(), loc.getLongitude(), 1);
-            } catch (IOException e1) {
-                Log.e("MapsActivity",
-                        "IO Exception in getFromLocation()");
-                e1.printStackTrace();
-                return ("IO Exception trying to get address");
-            } catch (IllegalArgumentException e2) {
-                // Error message to post in the log
-                String errorString = "Illegal arguments " +
-                        Double.toString(loc.getLatitude()) +
-                        " , " +
-                        Double.toString(loc.getLongitude()) +
-                        " passed to address service";
-                Log.e("MapsActivity", errorString);
-                e2.printStackTrace();
-                return errorString;
+                // Separeate your place types by PIPE symbol "|"
+                // If you want all types places make it as null
+                // Check list of types supported by google
+                // type 'geocode' is used here
+                String types = "geocode"; // Listing places only geocoding results
+
+                // Radius in meters - increase this value if you don't find any places
+                double radius = 10; // 1000 meters
+
+                // get nearest places
+                nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
+                        getCurrentLocation().getLongitude(), radius, types);
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            // If the reverse geocode returned an address
-            if (addresses != null && addresses.size() > 0) {
-                // Get the first address
-                Address address = addresses.get(0);
-                /*
-                 * Format the first line of address (if available),
-                 * city, and country name.
-                 */
-                // Return the text
-                return String.format(
-                        "%s, %s, %s",
-                        // If there's a street address, add it
-                        address.getMaxAddressLineIndex() > 0 ?
-                                address.getAddressLine(0) : "",
-                        // Locality is usually a city
-                        address.getLocality(),
-                        // The country of the address
-                        address.getCountryName());
-            } else {
-                return "No address found";
-            }
+            return null;
         }
+
+        /**
+         * After completing background task Dismiss the progress dialog
+         * and show the data in UI
+         * Always use runOnUiThread(new Runnable()) to update UI from background
+         * thread, otherwise you will get error
+         * **/
+        protected void onPostExecute(String file_url) {
+            // remove the progress bar after getting all products
+            mActivityIndicator.setVisibility(View.GONE);
+            // updating UI from Background Thread
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    /**
+                     * Updating parsed Places into LISTVIEW
+                     * */
+                    // Get json response status
+                    String status = nearPlaces.status;
+
+                    // Check for all possible status
+                    if(status.equals("OK")){
+                        // Successfully got places details
+                        if (nearPlaces.results != null) {
+                            // loop through each place
+                            place = nearPlaces.results.get(0);
+                            mCurrentLocation.setText(place.name);
+                        }
+                    }
+                    else {
+                        // Zero results found
+                        alert.showAlertDialog(MapsActivity.this, "Knock Knock",
+                                "Can not retrieve place name.",
+                                false);
+                    }
+                }
+            });
+
+        }
+
     }
 }

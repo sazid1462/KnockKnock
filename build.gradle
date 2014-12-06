@@ -3,6 +3,8 @@
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
+        mavenLocal()  // For google-play-services is not on Maven Central.
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.0.0-rc2'
@@ -15,5 +17,7 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        mavenCentral()
+        mavenLocal()  // For google-play-services is not on Maven Central.
     }
 }

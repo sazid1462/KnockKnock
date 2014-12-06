@@ -1,7 +1,14 @@
-apply plugin: 'com.android.application'
+apply plugin: 'android'
+
+repositories {
+    //jcenter()
+    //maven{url 'http://repo1.maven.org/maven2'}
+    mavenCentral()
+    //mavenLocal()  // For google-play-services is not on Maven Central.
+}
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion "Google Inc.:Google APIs:21"
     buildToolsVersion "21.1.1"
 
     defaultConfig {
@@ -20,7 +27,33 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:21.0.2'
     compile 'com.google.android.gms:play-services:6.1.71'
+    compile('com.google.api-client:google-api-client-android:1.19.0') {
+        exclude module: 'httpclient'
+    }
+    //compile files('libs/google-api-client-1.19.0.jar')
+    compile('com.google.api-client:google-api-client-android2:1.11.0-beta') {
+        exclude module: 'httpclient'
+    }
+    compile('com.google.oauth-client:google-oauth-client:1.19.0') {
+        exclude module: 'httpclient'
+    }
+    compile('com.google.http-client:google-http-client:1.19.0') {
+        exclude module: 'httpclient'
+    }
+    compile('com.google.http-client:google-http-client-android:1.19.0') {
+        exclude module: 'httpclient'
+    }
+    //compile 'com.google.http-client:google-http-client-android2:1.11.0-beta'
+    //compile 'com.google.http-client:google-http-client-android3:1.11.0-beta'
+    compile('com.google.http-client:google-http-client-gson:1.19.0') {
+        exclude module: 'httpclient'
+    }
+    //compile 'com.google.code.gson:gson:2.3.1'
+    //compile 'com.google.guava:guava:18.0'
+
+    //compile 'org.codehaus.jackson:jackson-core-asl:1.9.13'
+    //compile 'com.google.protobuf:protobuf-java:2.6.1'
 }
