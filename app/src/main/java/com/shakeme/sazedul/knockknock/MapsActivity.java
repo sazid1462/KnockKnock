@@ -4,7 +4,6 @@ package com.shakeme.sazedul.knockknock;
  * Created by Sazedul on 01-Dec-14.
  **/
 
-import android.app.ProgressDialog;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -43,11 +42,11 @@ public class MapsActivity extends LocationDetector implements LocationListener {
     // Places List
     PlaceList nearPlaces;
 
-    // Progress dialog
-    ProgressDialog pDialog;
-
-    // ListItems data
+    // Select a place
     Place place;
+
+    // Details of a place data
+    PlaceDetails placeDetails;
 
     // KEY Strings
     public static String KEY_REFERENCE = "reference"; // id of the place
@@ -209,15 +208,82 @@ public class MapsActivity extends LocationDetector implements LocationListener {
                 // If you want all types places make it as null
                 // Check list of types supported by google
                 // type 'geocode' is used here
-                String types = "geocode"; // Listing places only geocoding results
+                String types = null; // Listing places only geocoding results
 
                 // Radius in meters - increase this value if you don't find any places
-                double radius = 10; // 1000 meters
+                double radius = 80; // 80 meters
+                // continue searching for places until finding any place and increase the searching radius up to 160 metres
+                for (int i=0; i<8 && nearPlaces==null; i++) {
+                    // get nearest places
+                    nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
+                            getCurrentLocation().getLongitude(), radius, types);
+                    radius += 10;
+                }
 
-                // get nearest places
-                nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
-                        getCurrentLocation().getLongitude(), radius, types);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
 
+        /**
+         * After completing background task Dismiss the progress dialog
+         * and show the data in UI
+         * Always use runOnUiThread(new Runnable()) to update UI from background
+         * thread, otherwise you will get error
+         * **/
+        protected void onPostExecute(String file_url) {
+            // updating UI from Background Thread
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    /**
+                     * Updating parsed Places into LISTVIEW
+                     * */
+                    // Get json response status
+                    String status = nearPlaces.status;
+
+                    // Check for status
+                    if(status.equals("OK")){
+                        // Successfully got places details
+                        if (nearPlaces.results != null) {
+                            // select a place
+                            place = nearPlaces.results.get(0);
+                            new LoadPlaceDetails().execute(place.reference);
+                            //mCurrentLocation.setText(place.id);
+                        }
+                    }
+                    else {
+                        // Zero results found
+                        alert.showAlertDialog(MapsActivity.this, "Can not retrieve any address",
+                                "OK",
+                                false);
+                    }
+                }
+            });
+
+        }
+
+    }
+
+    class LoadPlaceDetails extends AsyncTask<String, String, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        /**
+         * getting Profile JSON
+         * */
+        protected String doInBackground(String... args) {
+            String reference = args[0];
+
+            // creating Places class object
+            //googlePlaces = new GooglePlaces();
+
+            // Check if user is connected to Internet
+            try {
+                placeDetails = googlePlaces.getPlaceDetails(reference);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -237,26 +303,21 @@ public class MapsActivity extends LocationDetector implements LocationListener {
             // updating UI from Background Thread
             runOnUiThread(new Runnable() {
                 public void run() {
-                    /**
-                     * Updating parsed Places into LISTVIEW
-                     * */
                     // Get json response status
-                    String status = nearPlaces.status;
+                    if (placeDetails != null) {
+                        String status = placeDetails.status;
 
-                    // Check for all possible status
-                    if(status.equals("OK")){
-                        // Successfully got places details
-                        if (nearPlaces.results != null) {
-                            // loop through each place
-                            place = nearPlaces.results.get(0);
-                            mCurrentLocation.setText(place.name);
+                        if (status.equals("OK")) {
+                            // Successfully got places details
+                            if (placeDetails.result != null) {
+
+                                String address = placeDetails.result.formatted_address;
+                                address = address == null ? "Unknown!" : address;
+                                mCurrentLocation.setText(address);
+                            }
+                        } else {
+                            mCurrentLocation.setText("Could not find details.");
                         }
-                    }
-                    else {
-                        // Zero results found
-                        alert.showAlertDialog(MapsActivity.this, "Knock Knock",
-                                "Can not retrieve place name.",
-                                false);
                     }
                 }
             });

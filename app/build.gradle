@@ -1,14 +1,7 @@
-apply plugin: 'android'
-
-repositories {
-    //jcenter()
-    //maven{url 'http://repo1.maven.org/maven2'}
-    mavenCentral()
-    //mavenLocal()  // For google-play-services is not on Maven Central.
-}
+apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion "Google Inc.:Google APIs:21"
+    compileSdkVersion 21
     buildToolsVersion "21.1.1"
 
     defaultConfig {
@@ -34,9 +27,9 @@ dependencies {
         exclude module: 'httpclient'
     }
     //compile files('libs/google-api-client-1.19.0.jar')
-    compile('com.google.api-client:google-api-client-android2:1.11.0-beta') {
-        exclude module: 'httpclient'
-    }
+    //compile('com.google.api-client:google-api-client-android2:1.11.0-beta') {
+        //exclude module: 'httpclient'
+    //}
     compile('com.google.oauth-client:google-oauth-client:1.19.0') {
         exclude module: 'httpclient'
     }
