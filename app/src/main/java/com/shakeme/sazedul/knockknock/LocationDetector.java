@@ -18,13 +18,8 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.maps.model.LatLng;
-
-import java.util.Vector;
-
 
 public class LocationDetector extends FragmentActivity implements
         GooglePlayServicesClient.ConnectionCallbacks,
@@ -70,11 +65,6 @@ public class LocationDetector extends FragmentActivity implements
 
     SharedPreferences mPrefs;
     SharedPreferences.Editor mEditor;
-
-    /**
-     * List of Geofences
-     */
-    private Vector<Geofence> listGeofences;
 
     /*** Define a DialogFragment that displays the error dialog
     public static class ErrorDialogFragment extends DialogFragment {
@@ -279,14 +269,5 @@ public class LocationDetector extends FragmentActivity implements
             Log.e(TAG, "Exception while starting resolution activity", e);
             retryConnecting();
         }
-    }
-
-    public void addGeofence(LatLng latLng){
-        listGeofences.add(new Geofence() {
-            @Override
-            public String getRequestId() {
-                return null; // TODO
-            }
-        });
     }
 }

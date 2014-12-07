@@ -23,6 +23,8 @@
             android:layout_height="wrap_content" />
         <ProgressBar
             android:id="@+id/cur_location_progress"
+            android:scaleX=".5"
+            android:scaleY=".5"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:indeterminate="true"

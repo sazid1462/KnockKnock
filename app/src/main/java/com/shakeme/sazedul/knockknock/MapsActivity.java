@@ -4,6 +4,7 @@ package com.shakeme.sazedul.knockknock;
  * Created by Sazedul on 01-Dec-14.
  **/
 
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,10 +15,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+
+import static java.lang.System.exit;
 
 public class MapsActivity extends LocationDetector implements LocationListener {
 
@@ -48,11 +53,6 @@ public class MapsActivity extends LocationDetector implements LocationListener {
     // Details of a place data
     PlaceDetails placeDetails;
 
-    // KEY Strings
-    public static String KEY_REFERENCE = "reference"; // id of the place
-    public static String KEY_NAME = "name"; // name of the place
-    public static String KEY_VICINITY = "vicinity"; // Place area name
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +62,18 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         mActivityIndicator = (ProgressBar) findViewById(R.id.cur_location_progress);
         Button mAddNew = (Button)findViewById(R.id.btn_add_geofences);
         nCDetector = new NetworkConnectivityDetector(getApplicationContext());
+
+        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS){
+        } else {
+            alert.showAlertDialog(this, "Knock Knock", "This app needs GooglePlayServices. GooglePlayServices is not available. Closing the app", false,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            exit(1);
+                        }
+                    });
+        }
 
         mAddNew.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,7 +110,13 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         if (!isInternetPresent) {
             // Internet Connection is not present
             alert.showAlertDialog(this, "Internet Connection Error",
-                    "Please connect to the Internet", false);
+                    "Please connect to the Internet. Closing the app.", false,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            exit(1);
+                        }
+                    });
             // stop executing code by return
             return;
         }
@@ -134,7 +152,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
     }
 
     /**
-     * Called when {@code mGoogleApiClient} is connected.
+     * Called when {@code mLocationClient} is connected.
      */
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -144,6 +162,9 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         }
     }
 
+    /**
+     * Called when {@code mLocationClient} is disconnected.
+     */
     @Override
     public void onDisconnected() {
         Log.i(TAG, "LocationClient disconnected");
@@ -207,8 +228,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
                 // Separeate your place types by PIPE symbol "|"
                 // If you want all types places make it as null
                 // Check list of types supported by google
-                // type 'geocode' is used here
-                String types = null; // Listing places only geocoding results
+                String types = null; // Listing all detected types of places
 
                 // Radius in meters - increase this value if you don't find any places
                 double radius = 80; // 80 meters
@@ -254,9 +274,15 @@ public class MapsActivity extends LocationDetector implements LocationListener {
                     }
                     else {
                         // Zero results found
-                        alert.showAlertDialog(MapsActivity.this, "Can not retrieve any address",
-                                "OK",
-                                false);
+                        alert.showAlertDialog(MapsActivity.this, "Knock Knock",
+                                "Can not retrieve any address",
+                                false,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        exit(1);
+                                    }
+                                });
                     }
                 }
             });
