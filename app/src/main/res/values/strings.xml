@@ -7,6 +7,7 @@
 
     <!-- User interface labels and strings -->
 
+
     <!-- Address format -->
     <string name="address_output_string">%1$s %2$s %3$s</string>
 
@@ -53,5 +54,34 @@
     <string name="lbl_current_location">Current location:</string>
     <string name="btn_add_geofences">Add New Reminder</string>
     <string name="btn_show_geofences">Show Reminder(s)</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="lbl_latitude">Latitude:</string>
+    <string name="lbl_longitude">Longitude:</string>
+    <string name="title_activity_add_geofence">Add Reminder</string>
+    <string name="lbl_radius">Radius(meter):</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="lbl_expiration">Expiration(hour):</string>
+    <string name="lbl_type">Type:</string>
+    <string name="lbl_help">You can set latitude and longitude here in the textboxes or you can set these from the map by tapping on the map.</string>
+    <string name="lbl_details">
+        Latitude and Longitude fields are for the center of your destination.\n\n
+
+        Radius is the field where you can set the value of the farthest distance where you want to be reminded.\n\n
+
+        With the latitude, longitude and the radius Knock Knock will create a circular area on the map having latitude and longitude as the center of it
+        and radius as the radius of the circle.\n\n
+
+        Expiration time is the field where you should specify the time of expiration of this reminder. You can set it -1 if you want never to expire it.\n\n
+
+        Type is the field where you should specify when should you be reminded. There are three types. Enter, Exit and Both.\n
+        Select Enter if you want to be reminded when you enter the area.\n
+        Select Exit if you want to be reminded when you exit the area.\n
+        Select Both if you want to be reminded when you either enter or exit the area.
+    </string>
+    <string name="title_activity_details_help">DetailsHelpActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="lbl_heading_details_help">Knock Knock</string>
+    <string name="btn_help">Help</string>
 
 </resources>

@@ -5,12 +5,12 @@ package com.shakeme.sazedul.knockknock;
  **/
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,7 +24,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import static java.lang.System.exit;
 
-public class MapsActivity extends LocationDetector implements LocationListener {
+public class MapsActivity extends LocationDetector implements LocationListener, GoogleMap.OnMapClickListener {
 
     private static final String TAG = "MapActivity";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
@@ -53,6 +53,12 @@ public class MapsActivity extends LocationDetector implements LocationListener {
     // Details of a place data
     PlaceDetails placeDetails;
 
+    // Extra Message prefix
+    public static final String PREFIX = "com.shakeme.sazedul.knockknock";
+
+    /**
+     * Called when the app is launched.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,12 +66,10 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         setUpMapIfNeeded();
         mCurrentLocation = (TextView) findViewById(R.id.txt_current_location);
         mActivityIndicator = (ProgressBar) findViewById(R.id.cur_location_progress);
-        Button mAddNew = (Button)findViewById(R.id.btn_add_geofences);
         nCDetector = new NetworkConnectivityDetector(getApplicationContext());
 
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
         if (resultCode != ConnectionResult.SUCCESS){
-        } else {
             alert.showAlertDialog(this, "Knock Knock", "This app needs GooglePlayServices. GooglePlayServices is not available. Closing the app", false,
                     new DialogInterface.OnClickListener() {
                         @Override
@@ -74,13 +78,6 @@ public class MapsActivity extends LocationDetector implements LocationListener {
                         }
                     });
         }
-
-        mAddNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO
-            }
-        });
     }
 
     /**
@@ -190,13 +187,7 @@ public class MapsActivity extends LocationDetector implements LocationListener {
             }
         });
 
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                // TODO
-                //getAddress();
-            }
-        });
+        mMap.setOnMapClickListener(this);
     }
 
     @Override
@@ -204,6 +195,14 @@ public class MapsActivity extends LocationDetector implements LocationListener {
         String msg = "Updated Location: " + LocationUtilities.getLatLngString(location);
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         //getAddress();
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        Intent intent = new Intent(this, AddGeofenceActivity.class);
+        double extra[] = {latLng.latitude, latLng.longitude};
+        intent.putExtra(PREFIX + ".latlng", extra);
+        startActivity(intent);
     }
 
     class LoadPlaces extends AsyncTask<String, String, String> {
@@ -350,5 +349,10 @@ public class MapsActivity extends LocationDetector implements LocationListener {
 
         }
 
+    }
+
+    public void addNewGeofence(View view){
+        Intent intent = new Intent(this, AddGeofenceActivity.class);
+        startActivity(intent);
     }
 }
