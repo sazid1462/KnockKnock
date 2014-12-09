@@ -36,13 +36,7 @@
             android:layout_width="0dp"
             android:layout_weight="3"
             android:layout_height="wrap_content" />
-        <ProgressBar
-            android:id="@+id/cur_location_progress"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:indeterminate="true"
-            android:visibility="visible"/>
+
         <Button android:id="@+id/btn_show_geofences"
             android:textSize="12sp"
             style = "?android:buttonBarButtonStyle"

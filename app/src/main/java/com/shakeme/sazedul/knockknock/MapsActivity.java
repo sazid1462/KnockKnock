@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,7 +29,6 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
     private TextView mCurrentLocation;
-    private ProgressBar mActivityIndicator;
 
     // flag for Internet connection status
     Boolean isInternetPresent = false;
@@ -65,7 +63,6 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
         mCurrentLocation = (TextView) findViewById(R.id.txt_current_location);
-        mActivityIndicator = (ProgressBar) findViewById(R.id.cur_location_progress);
         nCDetector = new NetworkConnectivityDetector(getApplicationContext());
 
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
@@ -213,7 +210,6 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mActivityIndicator.setVisibility(View.VISIBLE);
         }
 
         /**
@@ -252,39 +248,31 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
          * thread, otherwise you will get error
          * **/
         protected void onPostExecute(String file_url) {
-            // updating UI from Background Thread
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    /**
-                     * Updating parsed Places into LISTVIEW
-                     * */
-                    // Get json response status
-                    String status = nearPlaces.status;
+            // Get json response status
+            String status = nearPlaces.status;
 
-                    // Check for status
-                    if(status.equals("OK")){
-                        // Successfully got places details
-                        if (nearPlaces.results != null) {
-                            // select a place
-                            place = nearPlaces.results.get(0);
-                            new LoadPlaceDetails().execute(place.reference);
-                            //mCurrentLocation.setText(place.id);
-                        }
-                    }
-                    else {
-                        // Zero results found
-                        alert.showAlertDialog(MapsActivity.this, "Knock Knock",
-                                "Can not retrieve any address",
-                                false,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        exit(1);
-                                    }
-                                });
-                    }
+            // Check for status
+            if(status.equals("OK")){
+                // Successfully got places details
+                if (nearPlaces.results != null) {
+                    // select a place
+                    place = nearPlaces.results.get(0);
+                    new LoadPlaceDetails().execute(place.reference);
+                    //mCurrentLocation.setText(place.id);
                 }
-            });
+            }
+            else {
+                // Zero results found
+                alert.showAlertDialog(MapsActivity.this, "Knock Knock",
+                        "Can not retrieve any address",
+                        false,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                exit(1);
+                            }
+                        });
+            }
 
         }
 
@@ -324,7 +312,6 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
          * **/
         protected void onPostExecute(String file_url) {
             // remove the progress bar after getting all products
-            mActivityIndicator.setVisibility(View.GONE);
             // updating UI from Background Thread
             runOnUiThread(new Runnable() {
                 public void run() {

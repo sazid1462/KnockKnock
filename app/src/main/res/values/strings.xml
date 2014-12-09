@@ -58,10 +58,10 @@
     <string name="lbl_latitude">Latitude:</string>
     <string name="lbl_longitude">Longitude:</string>
     <string name="title_activity_add_geofence">Add Reminder</string>
-    <string name="lbl_radius">Radius(meter):</string>
+    <string name="lbl_radius">Radius (meter):</string>
     <string name="btn_ok">OK</string>
     <string name="btn_cancel">Cancel</string>
-    <string name="lbl_expiration">Expiration(hour):</string>
+    <string name="lbl_expiration">Expiration (hour):</string>
     <string name="lbl_type">Type:</string>
     <string name="lbl_help">You can set latitude and longitude here in the textboxes or you can set these from the map by tapping on the map.</string>
     <string name="lbl_details">
@@ -83,5 +83,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="lbl_heading_details_help">Knock Knock</string>
     <string name="btn_help">Help</string>
+    <string name="lbl_approximate_address">Approximate address :</string>
+    <string name="btn_got_it">OK, got it!</string>
 
 </resources>
