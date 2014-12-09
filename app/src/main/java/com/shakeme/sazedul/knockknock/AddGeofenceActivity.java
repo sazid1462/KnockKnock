@@ -55,16 +55,16 @@ public class AddGeofenceActivity extends ActionBarActivity
     private int mType;
 
     private boolean isValidLatitudeValue(String value) {
-        float lat;
+        double lat;
         if (value.matches("")) lat = INVALID_FLOAT_VALUE;
-        else lat = Float.valueOf(value);
+        else lat = Double.parseDouble(value);
         return lat >= -85f && lat <= 85f;
     }
 
     private boolean isValidLongitudeValue(String value) {
-        float lng;
+        double lng;
         if (value.matches("")) lng = INVALID_FLOAT_VALUE;
-        else lng = Float.valueOf(value);
+        else lng = Double.parseDouble(value);
         return lng >= -180f && lng <= 180f;
     }
 
@@ -95,6 +95,8 @@ public class AddGeofenceActivity extends ActionBarActivity
 
         txtLatitude.setOnFocusChangeListener(this);
         txtLongitude.setOnFocusChangeListener(this);
+        txtRadius.setOnFocusChangeListener(this);
+        txtExpirationDuration.setOnFocusChangeListener(this);
 
         if (intent.hasExtra(PREFIX+".latlng")) {
             runOnUiThread(new Runnable() {
@@ -158,6 +160,12 @@ public class AddGeofenceActivity extends ActionBarActivity
         if (isValidLatitudeValue(txtLatitude.getText().toString()) &&
                 isValidLongitudeValue(txtLongitude.getText().toString()))
             new LoadPlaces().execute();
+        else runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                txtAddress.setText("Invalid latitude or longitude!");
+            }
+        });
     }
 
     class LoadPlaces extends AsyncTask<String, String, String> {
@@ -185,12 +193,14 @@ public class AddGeofenceActivity extends ActionBarActivity
 
                 // Radius in meters - increase this value if you don't find any places
                 double radius = 80; // 80 meters
+                nearPlaces = googlePlaces.search(Double.parseDouble(txtLatitude.getText().toString()),
+                        Double.parseDouble(txtLongitude.getText().toString()), radius, types);
                 // continue searching for places until finding any place and increase the searching radius up to 160 metres
-                for (int i=0; i<8 && nearPlaces==null; i++) {
+                for (int i=1; i<8 && nearPlaces==null; i++) {
+                    radius += 10;
                     // get nearest places
                     nearPlaces = googlePlaces.search(Double.parseDouble(txtLatitude.getText().toString()),
                             Double.parseDouble(txtLongitude.getText().toString()), radius, types);
-                    radius += 10;
                 }
 
             } catch (Exception e) {

@@ -44,7 +44,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="2"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
+                android:inputType="numberDecimal|numberSigned"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:enabled="true" />
@@ -62,7 +62,7 @@
                 android:layout_height="wrap_content" />
             <EditText
                 android:id="@+id/txt_longitude"
-                android:inputType="numberDecimal"
+                android:inputType="numberDecimal|numberSigned"
                 android:layout_width="0dp"
                 android:layout_weight="2"
                 android:layout_height="wrap_content"

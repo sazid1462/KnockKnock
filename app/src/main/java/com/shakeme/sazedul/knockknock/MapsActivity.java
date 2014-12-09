@@ -227,12 +227,14 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
 
                 // Radius in meters - increase this value if you don't find any places
                 double radius = 80; // 80 meters
+                nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
+                        getCurrentLocation().getLongitude(), radius, types);
                 // continue searching for places until finding any place and increase the searching radius up to 160 metres
-                for (int i=0; i<8 && nearPlaces==null; i++) {
+                for (int i=1; i<8 && nearPlaces==null; i++) {
+                    radius += 10;
                     // get nearest places
                     nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
                             getCurrentLocation().getLongitude(), radius, types);
-                    radius += 10;
                 }
 
             } catch (Exception e) {
