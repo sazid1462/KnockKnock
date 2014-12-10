@@ -4,26 +4,36 @@ package com.shakeme.sazedul.knockknock;
  * Created by Sazedul on 01-Dec-14.
  **/
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationStatusCodes;
 
-public class LocationDetector extends FragmentActivity implements
+import java.util.ArrayList;
+
+public class LocationDetector implements
+        LocationListener,
         GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener {
+        GooglePlayServicesClient.OnConnectionFailedListener,
+        LocationClient.OnAddGeofencesResultListener {
 
     // Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -48,97 +58,126 @@ public class LocationDetector extends FragmentActivity implements
 
     private static final String TAG = "LocationDetector";
 
-    private static final String KEY_IN_RESOLUTION = "is_in_resolution";
-
     /**
      * Request code for auto Google Play Services error resolution.
      */
-    protected static final int REQUEST_CODE_RESOLUTION = 1;
+    private static final int REQUEST_CODE_RESOLUTION = 1;
+
+    // Alert Dialog Manager
+    MessageDialogueViewer alert = new MessageDialogueViewer();
 
     // Define an object that holds accuracy and frequency parameters
-    protected LocationRequest mLocationRequest;
-    protected boolean mUpdatesRequested;
+    private LocationRequest mLocationRequest;
+    private boolean mUpdatesRequested;
     /**
      * Location client for handling location requests
      */
-    protected LocationClient mLocationClient;
+    private LocationClient mLocationClient;
 
     SharedPreferences mPrefs;
     SharedPreferences.Editor mEditor;
 
-    /*** Define a DialogFragment that displays the error dialog
-    public static class ErrorDialogFragment extends DialogFragment {
-        // Global field to contain the error dialog
-        private Dialog mDialog;
-        // Default constructor. Sets the dialog field to null
-        public ErrorDialogFragment() {
-            super();
-            mDialog = null;
-        }
-        // Set the dialog to display
-        public void setDialog(Dialog dialog) {
-            mDialog = dialog;
-        }
-        // Return a Dialog to the DialogFragment.
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            return mDialog;
-        }
-    }
-    **/
+    // Stores the PendingIntent used to request geofence monitoring
+    private PendingIntent mGeofenceRequestIntent;
+    private PendingIntent mTransitionPendingIntent;
 
+    // Defines the allowable request types
+    public enum REQUEST_TYPE {
+        ADD,
+        IDLE
+    }
+    private REQUEST_TYPE mRequestType;
+    // Flag that indicates if a request is underway.
+    private boolean mInProgress;
     /**
      * Determines if the client is in a resolution state, and
      * waiting for resolution intent to return.
      */
-    private boolean mIsInResolution;
+    public boolean mIsInResolution;
+
+    // The new Geofence ID
+    private int geofenceID = 0;
+    // The MAX ID of a geofence
+    private static final int MAX_ID = 2147483647;
+
+    private final Activity activity;
+
+    // Persistent storage for geofences
+    private SimpleGeofenceStore mGeofenceStorage;
+    private ArrayList<Geofence> mCurrentGeofences;
+    /*
+     * Define a request code to send to Google Play Services. This code is
+     * returned in Activity.OnActivityResult
+     */
+    private final static int CINNECTION_FAILURE_RESPLUTION_REQUEST = 9000;
+
+    private Location mCurrentLocation;
+
 
     public Location getCurrentLocation(){
-        if (mLocationClient != null)
-            return mLocationClient.getLastLocation();
-        else return null;
+        return mCurrentLocation;
+    }
+
+    public String getNextGeofenceID () {
+        return Integer.toString((geofenceID++ % MAX_ID) + 1);
+    }
+
+    public static class ErrorDialogueFragment extends DialogFragment {
+        // Global field to contain the error dialog
+        private Dialog mDialog;
+
+        // Default constructor. Sets the dialog field to null
+        public ErrorDialogueFragment() {
+            super();
+            mDialog = null;
+        }
+
+        // Set the dialog to display
+        public void setDialog(Dialog dialog) {
+            mDialog = dialog;
+        }
+
+        // Return a Dialog to the DialogFragment.
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return mDialog;
+        }
     }
 
     /**
-     * Called when the activity is starting. Restores the activity state.
+     * General constructor for the LocationDetector
      */
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            mIsInResolution = savedInstanceState.getBoolean(KEY_IN_RESOLUTION, false);
-        }
-        mLocationClient = new LocationClient(this, this, this);
+    public LocationDetector(Activity activity) {
+        // Set the activity of the LocationDetector
+        this.activity = activity;
 
+        mLocationClient = new LocationClient(activity, this, this);
+
+        mRequestType = REQUEST_TYPE.IDLE;
+
+        // Instantiate a new geofence storage area
+        mGeofenceStorage = new SimpleGeofenceStore(activity);
+        // Instantiate the current List of geofences
+        mCurrentGeofences = new ArrayList<Geofence>();
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create();
+        // Start with the request flag set to false
+        mInProgress = false;
     }
 
-    /**
-     * Called when the Activity is made visible.
-     * A connection to Play Services need to be initiated as
-     * soon as the activity is visible. Registers {@code ConnectionCallbacks}
-     * and {@code OnConnectionFailedListener} on the
-     * activities itself.
-     */
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (mLocationClient == null) {
-            mLocationClient = new LocationClient(this, this, this);
-        }
-        mLocationClient.connect();
-
+    public void startLocationDetector() {
         // Open the shared preferences
-        mPrefs = getSharedPreferences("SharedPreferences",
+        mPrefs = activity.getSharedPreferences("SharedPreferences",
                 Context.MODE_PRIVATE);
         // Get a SharedPreferences editor
         mEditor = mPrefs.edit();
         mEditor.apply();
+        if (mLocationClient==null) {
+            mLocationClient = new LocationClient(activity, this, this);
+        }
+        mLocationClient.connect();
     }
 
-    @Override
-    protected void onPause() {
+    public void pauseLocationDetector() {
         // Save the current setting for updates
         mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
         mEditor.commit();
@@ -150,13 +189,9 @@ public class LocationDetector extends FragmentActivity implements
         mLocationRequest.setInterval(UPDATE_INTERVAL_ONSTOP);
         // Set the fastest update interval to 5 second
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL_ONSTOP);
-
-        super.onPause();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    protected void resumeLocationDetector() {
         // Start with updates turned off
         mUpdatesRequested = false;
 
@@ -182,33 +217,17 @@ public class LocationDetector extends FragmentActivity implements
         }
     }
 
-    /**
-     * Called when activity gets invisible. Connection to Play Services needs to
-     * be disconnected as soon as an activity is invisible.
-     */
-    @Override
-    protected void onStop() {
-        if (mLocationClient != null) {
+    protected void stopLocationDetector() {
+        // If the client is connected
+        if (mLocationClient.isConnected()) {
             mLocationClient.disconnect();
         }
-        super.onStop();
-    }
-
-    /**
-     * Saves the resolution state.
-     */
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(KEY_IN_RESOLUTION, mIsInResolution);
     }
 
     /**
      * Handles Google Play Services resolution callbacks.
      */
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case REQUEST_CODE_RESOLUTION:
                 retryConnecting();
@@ -224,17 +243,32 @@ public class LocationDetector extends FragmentActivity implements
     }
 
     /**
-     * Called when {@code mGoogleApiClient} is connected.
+     * Called when {@code mLocationClient} is connected.
      */
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "LocationClient connected");
+        if (mUpdatesRequested) {
+            mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        }
+        Log.i(TAG, "GooglePlayServicesClient connected");
+        switch (mRequestType) {
+            case ADD:
+                // Get the PendingIntent for the request
+                mTransitionPendingIntent = getTransitionPendingIntent();
+                // Send a request to add the current geofences
+                mLocationClient.addGeofences(mCurrentGeofences, mGeofenceRequestIntent, this);
+        }
     }
 
+    /**
+     * Called when {@code mLocationClient} is disconnected.
+     */
     @Override
     public void onDisconnected() {
         Log.i(TAG, "LocationClient disconnected");
-
+        // Turn off the request flag
+        mInProgress = false;
     }
 
     /**
@@ -245,15 +279,33 @@ public class LocationDetector extends FragmentActivity implements
     @Override
     public void onConnectionFailed(ConnectionResult result) {
         Log.i(TAG, "GooglePlayServicesClient connection failed: " + result.toString());
-        if (!result.hasResolution()) {
+        // Turn off the request flag
+        mInProgress = false;
+        /*
+         * If the error has a resolution, start a Google Play Services activity
+         * to resolve it.
+         */
+        if (result.hasResolution()) {
+            try {
+                result.startResolutionForResult(activity, CINNECTION_FAILURE_RESPLUTION_REQUEST);
+            } catch (SendIntentException e) {
+                // Log the error
+                e.printStackTrace();
+            }
+        } else {
+            // Get the error code
+            int errorCode = result.getErrorCode();
+            // Get the error dialog from Google Play Services
+            Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(errorCode, activity, CINNECTION_FAILURE_RESPLUTION_REQUEST);
             // Show a localized error dialog.
-            GooglePlayServicesUtil.getErrorDialog(
-                    result.getErrorCode(), this, 0, new OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialog) {
-                            retryConnecting();
-                        }
-                    }).show();
+            if (errorDialog != null) {
+                // Create a new DialogFragment for the error dialog
+                ErrorDialogueFragment errorFragment = new ErrorDialogueFragment();
+                // Set the dialog in the DialogFragment
+                errorFragment.setDialog(errorDialog);
+                // Show the error dialog in the DialogFragment
+                errorFragment.show(activity.getFragmentManager(), "Knock Knock");
+            }
             return;
         }
         // If there is an existing resolution error being displayed or a resolution
@@ -264,10 +316,120 @@ public class LocationDetector extends FragmentActivity implements
         }
         mIsInResolution = true;
         try {
-            result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
+            result.startResolutionForResult(activity, REQUEST_CODE_RESOLUTION);
         } catch (SendIntentException e) {
             Log.e(TAG, "Exception while starting resolution activity", e);
             retryConnecting();
         }
+    }
+
+
+    @Override
+    public void onLocationChanged(Location location) {
+        String msg = "Updated Location: " + LocationUtilities.getLatLngString(location);
+        Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show();
+        mCurrentLocation = location;
+    }
+
+    @Override
+    public void onAddGeofencesResult(int statusCode, String[] strings) {
+        // If adding the geofencess was successful
+        if (LocationStatusCodes.SUCCESS == statusCode) {
+            /*
+             * Handle successful addition of geofences.
+             * Show a confirmation dialog to the user
+             */
+            alert.showAlertDialog(activity, "Add Reminder", "Your reminder for the location "+strings[0]+" is successful.", true,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        } else {
+            /*
+             * If adding the geofences failed report errors to the user
+             */
+            alert.showAlertDialog(activity, "Add Reminder", "Sorry, your reminder for the location "+strings[0]+" is unsuccessful.\n" +
+                            "Restart the app and try again later.", false,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        }
+        // Turn off the in progress flag.
+        mInProgress = false;
+    }
+
+    /**
+     * Creates a Geofence as the given parameter
+     *
+     * @param latitude The latitude of the center of the geofence circle
+     * @param longitude The longitude of the center of the geofence circle
+     * @param radius The radius of the geofence circle
+     * @param expiration Expiration duration of the geofence in milli seconds
+     * @param type Transition type of the geofence
+     */
+    public void createGeofence(double latitude, double longitude, float radius, long expiration, int type) {
+        /*
+         * Create an internal object to store the data. Get its ID by calling the getNextGeofenceID()
+         * method and set it. This is a "flattened" object that contains a set of strings
+         */
+        SimpleGeofence mSimpleGeofence = new SimpleGeofence(getNextGeofenceID(), latitude, longitude, radius, expiration<0 ? -1 : expiration, type);
+        // Store this flat version
+        mGeofenceStorage.setGeofence(mSimpleGeofence.getId(), mSimpleGeofence);
+        mCurrentGeofences.add(mSimpleGeofence.toGeofence());
+    }
+
+    public void addGeofences(){
+        // Start a request to add geofences
+        mRequestType = REQUEST_TYPE.ADD;
+        /*
+         * Test for GooglePlayServices after setting the request type.
+         * If GooglePlayServices isn't present, the proper request can be restarted
+         */
+        if (!servicesConnected()) {
+            return;
+        }
+        if (!mInProgress) {
+            // Indicate that a request is underway
+            mInProgress = true;
+        } else {
+            // Notify the user that a request is being processed
+            alert.showAlertDialog(activity, "Add Reminder", "A request is being processed at this moment. Please try again later.",
+                    false, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        }
+    }
+
+    private boolean servicesConnected() {
+        // Check that GooglePlayservices is available
+        int errorCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(activity);
+        // If GooglePlayServices is available
+        if (errorCode == ConnectionResult.SUCCESS) {
+            // In debug mode, log the status
+            Log.d("Geofence Detection", "Google Play Services is available.");
+            return true;
+            // GooglePlayServices is not available for some reason
+        }else{
+            GooglePlayServicesUtil.getErrorDialog(errorCode, activity, 0).show();
+            return false;
+        }
+    }
+
+    /*
+     * Create a PendingIntent that triggers an IntentService in the app when a geofence
+     * transition occurs
+     */
+    private PendingIntent getTransitionPendingIntent(){
+        // Create an explicit Intent
+        Intent intent = new Intent(activity, ReceiveTransitionsIntentService.class);
+        /*
+         * Return the PendingIntent
+         */
+        return PendingIntent.getService(activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }

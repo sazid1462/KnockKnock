@@ -72,7 +72,7 @@
         With the latitude, longitude and the radius Knock Knock will create a circular area on the map having latitude and longitude as the center of it
         and radius as the radius of the circle.\n\n
 
-        Expiration time is the field where you should specify the time of expiration of this reminder. You can set it -1 if you want never to expire it.\n\n
+        Expiration time is the field where you should specify the time of expiration of this reminder. You can set negative value if you want never to expire it.\n\n
 
         Type is the field where you should specify when should you be reminded. There are three types. Enter, Exit and Both.\n
         Select Enter if you want to be reminded when you enter the area.\n

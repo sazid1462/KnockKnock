@@ -9,21 +9,21 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 import static java.lang.System.exit;
 
-public class MapsActivity extends LocationDetector implements LocationListener, GoogleMap.OnMapClickListener {
+public class MapsActivity extends FragmentActivity implements
+        GoogleMap.OnMapClickListener {
 
     private static final String TAG = "MapActivity";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
@@ -42,6 +42,15 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
     // Google Places
     GooglePlaces googlePlaces;
 
+    private static final String KEY_IN_RESOLUTION = "is_in_resolution";
+
+    /*
+    * Invalid values used to test geofence storage when retrieving geofences
+    */
+    public static final long INVALID_LONG_VALUE = -999l;
+    public static final float INVALID_FLOAT_VALUE = -999.0f;
+    public static final int INVALID_INT_VALUE = -999;
+
     // Places List
     PlaceList nearPlaces;
 
@@ -51,30 +60,50 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
     // Details of a place data
     PlaceDetails placeDetails;
 
+    LocationDetector mLocationDetector;
+
+    Location currentLocation;
+
     // Extra Message prefix
     public static final String PREFIX = "com.shakeme.sazedul.knockknock";
+
+    // RequestCode for starting AddGeofenceActivity for the result
+    private static final int REQUEST_CODE_FOR_ADD_GEOFENCE = 1;
 
     /**
      * Called when the app is launched.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        servicesConnected();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
         setUpMapIfNeeded();
         mCurrentLocation = (TextView) findViewById(R.id.txt_current_location);
         nCDetector = new NetworkConnectivityDetector(getApplicationContext());
+        mLocationDetector = new LocationDetector(this);
+    }
 
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS){
-            alert.showAlertDialog(this, "Knock Knock", "This app needs GooglePlayServices. GooglePlayServices is not available. Closing the app", false,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            exit(1);
-                        }
-                    });
-        }
+    /**
+     * Called when the Activity is made visible.
+     * A connection to Play Services need to be initiated as
+     * soon as the activity is visible. Registers {@code ConnectionCallbacks}
+     * and {@code OnConnectionFailedListener} on the
+     * activities itself.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Call the mLocationDetector to start
+        mLocationDetector.startLocationDetector();
+    }
+
+    @Override
+    protected void onPause() {
+        // Call the mLocationDetector to pause
+        mLocationDetector.pauseLocationDetector();
+        super.onPause();
     }
 
     /**
@@ -83,22 +112,16 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
      */
     @Override
     protected void onStop() {
-        // If the client is connected
-        if (mLocationClient.isConnected()) {
-            /*
-             * Remove location updates for a listener.
-             * The current Activity is the listener, so
-             * the argument is "this".
-             */
-            mLocationClient.removeLocationUpdates(this);
-        }
+        // Call the mLocationDetector to stop
+        mLocationDetector.stopLocationDetector();
         super.onStop();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        // Call the mLocationDetector to resume
+        mLocationDetector.resumeLocationDetector();
         // Check if Internet present
         isInternetPresent = nCDetector.isConnectionToInternetAvailable();
         if (!isInternetPresent) {
@@ -115,6 +138,30 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
             return;
         }
         setUpMapIfNeeded();
+    }
+
+    private boolean servicesConnected() {
+        // Check that GooglePlayservices is available
+        int errorCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        // If GooglePlayServices is available
+        if (errorCode == ConnectionResult.SUCCESS) {
+            // In debug mode, log the status
+            Log.d("Geofence Detection", "Google Play Services is available.");
+            return true;
+            // GooglePlayServices is not available for some reason
+        }else{
+            GooglePlayServicesUtil.getErrorDialog(errorCode, this, 0).show();
+            return false;
+        }
+    }
+
+    /**
+     * Saves the resolution state.
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_IN_RESOLUTION, mLocationDetector.mIsInResolution);
     }
 
     /**
@@ -146,26 +193,6 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
     }
 
     /**
-     * Called when {@code mLocationClient} is connected.
-     */
-    @Override
-    public void onConnected(Bundle connectionHint) {
-        Log.i(TAG, "LocationClient connected");
-        if (mUpdatesRequested) {
-            mLocationClient.requestLocationUpdates(mLocationRequest, this);
-        }
-    }
-
-    /**
-     * Called when {@code mLocationClient} is disconnected.
-     */
-    @Override
-    public void onDisconnected() {
-        Log.i(TAG, "LocationClient disconnected");
-
-    }
-
-    /**
      * This is where we can add markers or lines, add listeners or move the camera. In this case, we
      * just add a marker near Africa.
      * <p/>
@@ -180,6 +207,7 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
         mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
             @Override
             public void onMyLocationChange(Location location) {
+                currentLocation = location;
                 new LoadPlaces().execute();
             }
         });
@@ -188,18 +216,11 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-        String msg = "Updated Location: " + LocationUtilities.getLatLngString(location);
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        //getAddress();
-    }
-
-    @Override
     public void onMapClick(LatLng latLng) {
         Intent intent = new Intent(this, AddGeofenceActivity.class);
         double extra[] = {latLng.latitude, latLng.longitude};
         intent.putExtra(PREFIX + ".latlng", extra);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_CODE_FOR_ADD_GEOFENCE);
     }
 
     class LoadPlaces extends AsyncTask<String, String, String> {
@@ -227,14 +248,14 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
 
                 // Radius in meters - increase this value if you don't find any places
                 double radius = 80; // 80 meters
-                nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
-                        getCurrentLocation().getLongitude(), radius, types);
+                nearPlaces = googlePlaces.search(currentLocation.getLatitude(),
+                        currentLocation.getLongitude(), radius, types);
                 // continue searching for places until finding any place and increase the searching radius up to 160 metres
                 for (int i=1; i<8 && nearPlaces==null; i++) {
                     radius += 10;
                     // get nearest places
-                    nearPlaces = googlePlaces.search(getCurrentLocation().getLatitude(),
-                            getCurrentLocation().getLongitude(), radius, types);
+                    nearPlaces = googlePlaces.search(currentLocation.getLatitude(),
+                            currentLocation.getLongitude(), radius, types);
                 }
 
             } catch (Exception e) {
@@ -342,6 +363,22 @@ public class MapsActivity extends LocationDetector implements LocationListener, 
 
     public void addNewGeofence(View view){
         Intent intent = new Intent(this, AddGeofenceActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_CODE_FOR_ADD_GEOFENCE);
+    }
+
+    /**
+     * Handles Google Play Services resolution callbacks.
+     */
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mLocationDetector.onActivityResult(requestCode, resultCode, data);
+        if (data.hasExtra("GeofenceData")) {
+            double lat = data.getDoubleExtra("GeofenceLat", INVALID_FLOAT_VALUE);
+            double lng = data.getDoubleExtra("GeofenceLng", INVALID_FLOAT_VALUE);
+            float rad = data.getFloatExtra("GeofenceRad", INVALID_FLOAT_VALUE);
+            long exp = data.getLongExtra("GeofenceExp", INVALID_LONG_VALUE);
+            int type = data.getIntExtra("GeofenceType", INVALID_INT_VALUE);
+
+            mLocationDetector.createGeofence(lat, lng, rad, exp, type);
+        }
     }
 }

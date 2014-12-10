@@ -20,7 +20,8 @@ import static java.lang.System.exit;
 
 
 public class AddGeofenceActivity extends ActionBarActivity
-        implements AdapterView.OnItemSelectedListener, EditText.OnFocusChangeListener{
+        implements AdapterView.OnItemSelectedListener,
+        EditText.OnFocusChangeListener{
 
     // Alert Dialog Manager
     MessageDialogueViewer alert = new MessageDialogueViewer();
@@ -40,7 +41,15 @@ public class AddGeofenceActivity extends ActionBarActivity
     // Extra Message prefix
     public static final String PREFIX = "com.shakeme.sazedul.knockknock";
 
+    // To set the invalid latitude or longitude value if the text fields contain invalid data
     private static final float INVALID_FLOAT_VALUE = -999f;
+
+    /*
+     * Use to set an expiration time for a geofence. After this amount of time Location Services
+     * will stop tracking the geofence
+     */
+    private static final long SECOND_PER_HOUR = 60;
+    private static final long MILLISECONDS_PER_SECOND = 1000;
 
     // For the reference of UI elements
     private EditText txtLatitude;
@@ -307,11 +316,23 @@ public class AddGeofenceActivity extends ActionBarActivity
     }
 
     public void showHelpActivity(View view){
-        Intent intent = new Intent(this, DetailsHelpActivity.class);
-        startActivity(intent);
+        Intent intentHelp = new Intent(this, DetailsHelpActivity.class);
+        startActivity(intentHelp);
     }
 
     public void finishTheActivity(View view) {
+        finish();
+    }
+
+    public void addReminder(View view) {
+        Intent intentReminder = new Intent();
+        intentReminder.putExtra("GeofenceData", "Data successfully acquired.");
+        intentReminder.putExtra("GeofenceLat", Double.parseDouble(txtLatitude.getText().toString()));
+        intentReminder.putExtra("GeofenceLng", Double.parseDouble(txtLongitude.getText().toString()));
+        intentReminder.putExtra("GeofenceRad", Float.parseFloat(txtRadius.getText().toString()));
+        intentReminder.putExtra("GeofenceExp", Long.parseLong(txtExpirationDuration.getText().toString()));
+        intentReminder.putExtra("GeofenceType", mType);
+        setResult(RESULT_OK, intentReminder);
         finish();
     }
 }

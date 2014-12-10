@@ -24,7 +24,7 @@
             android:paddingTop="@dimen/padding_from_heading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-        <Button android:id="@+id/btn_ok"
+        <Button android:id="@+id/btn_ok_got_it"
             android:text="@string/btn_got_it"
             style="?android:buttonBarButtonStyle"
             android:layout_gravity="center|bottom"

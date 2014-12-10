@@ -104,7 +104,7 @@
                 android:layout_height="wrap_content" />
             <EditText
                 android:id="@+id/txt_expiration"
-                android:inputType="numberDecimal"
+                android:inputType="numberSigned"
                 android:layout_width="0dp"
                 android:layout_weight="2"
                 android:layout_height="wrap_content"
@@ -138,10 +138,12 @@
             android:orientation="horizontal">
 
             <Button
+                android:id="@+id/btn_ok"
                 style = "?android:attr/buttonBarButtonStyle"
                 android:text="@string/btn_ok"
                 android:layout_width="0dp"
                 android:layout_weight="1"
+                android:onClick="addReminder"
                 android:layout_height="wrap_content" />
             <Button
                 style = "?android:attr/buttonBarButtonStyle"
