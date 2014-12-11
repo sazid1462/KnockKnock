@@ -7,10 +7,12 @@ import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.util.Vector;
+
 
 public class ListGeofencesActivity extends ActionBarActivity {
     private static final int MAX_ID = 100;
-    ArrayAdapter<CharSequence> listGeofenceAdapter;
+
     ListView mListGeofence;
     // Persistent storage for geofences
     private SimpleGeofenceStore mGeofenceStorage;
@@ -19,11 +21,21 @@ public class ListGeofencesActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_geofences);
+        Vector<String> list = new Vector<>();
+        mGeofenceStorage = new SimpleGeofenceStore(this);
 
         mListGeofence = (ListView) findViewById(R.id.geofence_list);
         for (int i=0; i<MAX_ID; i++) {
-            if (MapsActivity.isActiveGeofence(i)) listGeofenceAdapter.add(mGeofenceStorage.getGeofence(Integer.toString(i)).getId());
+            if (MapsActivity.isActiveGeofence(i)) {
+                System.out.println("FUCK");
+                SimpleGeofence geofence = mGeofenceStorage.getGeofence(Integer.toString(i));
+                if (geofence != null) {
+                    System.out.println(geofence.getId());
+                    list.add(geofence.getId());
+                }
+            }
         }
+        final ArrayAdapter<String> listGeofenceAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_checked, list);
         mListGeofence.setAdapter(listGeofenceAdapter);
     }
 

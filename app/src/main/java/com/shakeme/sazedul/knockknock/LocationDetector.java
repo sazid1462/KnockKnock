@@ -61,7 +61,7 @@ public class LocationDetector implements
     /**
      * Request code for auto Google Play Services error resolution.
      */
-    private static final int REQUEST_CODE_RESOLUTION = 1;
+    private static final int REQUEST_CODE_RESOLUTION = 2;
 
     // Alert Dialog Manager
     MessageDialogueViewer alert = new MessageDialogueViewer();
@@ -77,13 +77,10 @@ public class LocationDetector implements
     SharedPreferences mPrefs;
     SharedPreferences.Editor mEditor;
 
-    // Stores the PendingIntent used to request geofence monitoring
-    private PendingIntent mGeofenceRequestIntent;
-    private PendingIntent mTransitionPendingIntent;
-
     // Defines the allowable request types
     public enum REQUEST_TYPE {
         ADD,
+        REMOVE,
         IDLE
     }
     private REQUEST_TYPE mRequestType;
@@ -246,9 +243,9 @@ public class LocationDetector implements
         switch (mRequestType) {
             case ADD:
                 // Get the PendingIntent for the request
-                mTransitionPendingIntent = getTransitionPendingIntent();
+                PendingIntent mTransitionPendingIntent = getTransitionPendingIntent();
                 // Send a request to add the current geofences
-                mLocationClient.addGeofences(mCurrentGeofences, mGeofenceRequestIntent, this);
+                mLocationClient.addGeofences(mCurrentGeofences, mTransitionPendingIntent, this);
         }
     }
 
@@ -350,6 +347,7 @@ public class LocationDetector implements
         }
         // Turn off the in progress flag.
         mInProgress = false;
+        mLocationClient.disconnect();
     }
 
     /**
@@ -371,7 +369,8 @@ public class LocationDetector implements
             SimpleGeofence mSimpleGeofence = new SimpleGeofence(id, latitude, longitude, radius, expiration < 0 ? -1 : expiration, type);
             // Store this flat version
             mGeofenceStorage.setGeofence(mSimpleGeofence.getId(), mSimpleGeofence);
-            mCurrentGeofences.add(mSimpleGeofence.toGeofence());
+            mCurrentGeofences.add(mSimpleGeofence.toGeofence());;
+            addGeofences();
         } else {
             alert.showAlertDialog(activity, "Knock Knock", "Sorry, no more geofence is available!", false, new DialogInterface.OnClickListener() {
                 @Override
@@ -394,6 +393,7 @@ public class LocationDetector implements
         if (!mInProgress) {
             // Indicate that a request is underway
             mInProgress = true;
+            mLocationClient.connect();
         } else {
             // Notify the user that a request is being processed
             alert.showAlertDialog(activity, "Add Reminder", "A request is being processed at this moment. Please try again later.",
@@ -426,7 +426,7 @@ public class LocationDetector implements
      */
     private PendingIntent getTransitionPendingIntent(){
         // Create an explicit Intent
-        Intent intent = new Intent(activity, ReceiveTransitionsIntentService.class);
+        Intent intent = new Intent(activity, ReceiveGeofenceTransitionsIntentService.class);
         /*
          * Return the PendingIntent
          */

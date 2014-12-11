@@ -1,15 +1,15 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="fill_parent"
-    android:scrollbars="vertical"
-    android:fillViewport="true"
-    android:padding="@dimen/layout_padding_all"
+    android:layout_height="match_parent" android:layout_width="match_parent"
+    android:orientation="vertical"
     tools:context="com.shakeme.sazedul.knockknock.ListGeofencesActivity">
 
     <ListView
         android:id="@+id/geofence_list"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:scrollbars="vertical"
+        android:padding="@dimen/layout_padding_all">
+
     </ListView>
-</ScrollView>
+</LinearLayout>

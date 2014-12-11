@@ -31,7 +31,7 @@ public class SimpleGeofenceStore {
     private static final String SHARED_PREFERENCES = "KnockKnockSharedPreferences";
     // Create the SharedPreferences with private access only
     public SimpleGeofenceStore(Context context) {
-        mPrefs = context.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
+        mPrefs = context.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_APPEND);
     }
 
     /**
@@ -72,8 +72,10 @@ public class SimpleGeofenceStore {
                 expirationDuration != INVALID_LONG_VALUE &&
                 radius != INVALID_FLOAT_VALUE && transitionType != INVALID_INT_VALUE) {
             // Return a true Geofence object
+            System.out.println("YOUR FUCKING ID IS "+id);
             return new SimpleGeofence(id, lat, lng, radius, expirationDuration, transitionType);
         } else {
+            System.out.println("FUCKING NULL IS GONNA RETURNED");
             return null;
         }
     }

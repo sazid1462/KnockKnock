@@ -18,9 +18,12 @@ import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.util.List;
 
 import static java.lang.System.exit;
 
@@ -58,7 +61,7 @@ public class MapsActivity extends FragmentActivity implements
     // The name of the SharedPreferences
     private static final String SHARED_PREFERENCES = "KnockKnockSharedPreferences";
     // The SharedPreferences object in which geofences are stored
-    private final SharedPreferences mPrefs = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);;
+    private SharedPreferences mPrefs;
 
     // Places List
     PlaceList nearPlaces;
@@ -84,6 +87,16 @@ public class MapsActivity extends FragmentActivity implements
     // Mark the used id
     private static boolean usedId[] = new boolean[MAX_ID];
 
+    // Store the Triggering Geofences Ids
+    private static String triggeringGeofencesIds[];
+    // Store the Triggering Geofences
+    private static List<Geofence> triggeringGeofences;
+
+    public static void setTriggeringGeofences(String ids[], List<Geofence> geofenceList) {
+        triggeringGeofencesIds = ids;
+        triggeringGeofences = geofenceList;
+    }
+
     /**
      * Return if a geofence is active
      *
@@ -105,6 +118,7 @@ public class MapsActivity extends FragmentActivity implements
                 return Integer.toString((geofenceID) + 1);
             }
         }
+        System.out.println("GETNEXTGEOFENCEID is RETURNING -1");
         return "-1";
     }
 
@@ -121,6 +135,7 @@ public class MapsActivity extends FragmentActivity implements
         mCurrentLocation = (TextView) findViewById(R.id.txt_current_location);
         nCDetector = new NetworkConnectivityDetector(getApplicationContext());
         mLocationDetector = new LocationDetector(this);
+        mPrefs = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
 
         // Get the activeGeofencesId string from the SharedPreference
         String activeGeofencesId = mPrefs.getString(KEY_GEOFENCE_ID, ACTIVE_GEOFENCE_EMPTY);
@@ -435,12 +450,15 @@ public class MapsActivity extends FragmentActivity implements
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         mLocationDetector.onActivityResult(requestCode, resultCode, data);
+        if (data == null) return;
         if (data.hasExtra("GeofenceData")) {
             double lat = data.getDoubleExtra("GeofenceLat", INVALID_FLOAT_VALUE);
             double lng = data.getDoubleExtra("GeofenceLng", INVALID_FLOAT_VALUE);
             float rad = data.getFloatExtra("GeofenceRad", INVALID_FLOAT_VALUE);
             long exp = data.getLongExtra("GeofenceExp", INVALID_LONG_VALUE);
             int type = data.getIntExtra("GeofenceType", INVALID_INT_VALUE);
+
+            System.err.println("CREATING GEOFENCE : LAT "+lat+" LNG "+lng+" rad "+rad);
 
             mLocationDetector.createGeofence(lat, lng, rad, exp, type);
         }
