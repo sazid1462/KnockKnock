@@ -95,11 +95,6 @@ public class LocationDetector implements
      */
     public boolean mIsInResolution;
 
-    // The new Geofence ID
-    private int geofenceID = 0;
-    // The MAX ID of a geofence
-    private static final int MAX_ID = 2147483647;
-
     private final Activity activity;
 
     // Persistent storage for geofences
@@ -116,10 +111,6 @@ public class LocationDetector implements
 
     public Location getCurrentLocation(){
         return mCurrentLocation;
-    }
-
-    public String getNextGeofenceID () {
-        return Integer.toString((geofenceID++ % MAX_ID) + 1);
     }
 
     public static class ErrorDialogueFragment extends DialogFragment {
@@ -157,7 +148,7 @@ public class LocationDetector implements
         // Instantiate a new geofence storage area
         mGeofenceStorage = new SimpleGeofenceStore(activity);
         // Instantiate the current List of geofences
-        mCurrentGeofences = new ArrayList<Geofence>();
+        mCurrentGeofences = new ArrayList<>();
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create();
         // Start with the request flag set to false
@@ -333,7 +324,7 @@ public class LocationDetector implements
 
     @Override
     public void onAddGeofencesResult(int statusCode, String[] strings) {
-        // If adding the geofencess was successful
+        // If adding the geofences was successful
         if (LocationStatusCodes.SUCCESS == statusCode) {
             /*
              * Handle successful addition of geofences.
@@ -375,10 +366,19 @@ public class LocationDetector implements
          * Create an internal object to store the data. Get its ID by calling the getNextGeofenceID()
          * method and set it. This is a "flattened" object that contains a set of strings
          */
-        SimpleGeofence mSimpleGeofence = new SimpleGeofence(getNextGeofenceID(), latitude, longitude, radius, expiration<0 ? -1 : expiration, type);
-        // Store this flat version
-        mGeofenceStorage.setGeofence(mSimpleGeofence.getId(), mSimpleGeofence);
-        mCurrentGeofences.add(mSimpleGeofence.toGeofence());
+        String id = MapsActivity.getNextGeofenceID();
+        if (!id.matches("-1")) {
+            SimpleGeofence mSimpleGeofence = new SimpleGeofence(id, latitude, longitude, radius, expiration < 0 ? -1 : expiration, type);
+            // Store this flat version
+            mGeofenceStorage.setGeofence(mSimpleGeofence.getId(), mSimpleGeofence);
+            mCurrentGeofences.add(mSimpleGeofence.toGeofence());
+        } else {
+            alert.showAlertDialog(activity, "Knock Knock", "Sorry, no more geofence is available!", false, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
+        }
     }
 
     public void addGeofences(){

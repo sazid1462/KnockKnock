@@ -4,8 +4,10 @@ package com.shakeme.sazedul.knockknock;
  * Created by Sazedul on 01-Dec-14.
  **/
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -43,6 +45,8 @@ public class MapsActivity extends FragmentActivity implements
     GooglePlaces googlePlaces;
 
     private static final String KEY_IN_RESOLUTION = "is_in_resolution";
+    private static  final String KEY_GEOFENCE_ID = "com.shakeme.sazedul.knockknock.KEY_GEOFENCE_ID";
+    private static  final String ACTIVE_GEOFENCE_EMPTY = "EMPTY";
 
     /*
     * Invalid values used to test geofence storage when retrieving geofences
@@ -50,6 +54,11 @@ public class MapsActivity extends FragmentActivity implements
     public static final long INVALID_LONG_VALUE = -999l;
     public static final float INVALID_FLOAT_VALUE = -999.0f;
     public static final int INVALID_INT_VALUE = -999;
+
+    // The name of the SharedPreferences
+    private static final String SHARED_PREFERENCES = "KnockKnockSharedPreferences";
+    // The SharedPreferences object in which geofences are stored
+    private final SharedPreferences mPrefs = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);;
 
     // Places List
     PlaceList nearPlaces;
@@ -70,6 +79,35 @@ public class MapsActivity extends FragmentActivity implements
     // RequestCode for starting AddGeofenceActivity for the result
     private static final int REQUEST_CODE_FOR_ADD_GEOFENCE = 1;
 
+    // The MAX ID of a geofence
+    private static final int MAX_ID = 100;
+    // Mark the used id
+    private static boolean usedId[] = new boolean[MAX_ID];
+
+    /**
+     * Return if a geofence is active
+     *
+     * @param id Id of the geofence
+     * @return If it is true/false
+     */
+    public static boolean isActiveGeofence(int id) {
+        return usedId[id];
+    }
+
+    public static void setAsInactiveGeofence(int id) {
+        usedId[id] = false;
+    }
+
+    public static String getNextGeofenceID () {
+        for (int geofenceID=0; geofenceID<MAX_ID; geofenceID++) {
+            if (!usedId[geofenceID]) {
+                usedId[geofenceID] = true;
+                return Integer.toString((geofenceID) + 1);
+            }
+        }
+        return "-1";
+    }
+
     /**
      * Called when the app is launched.
      */
@@ -83,6 +121,18 @@ public class MapsActivity extends FragmentActivity implements
         mCurrentLocation = (TextView) findViewById(R.id.txt_current_location);
         nCDetector = new NetworkConnectivityDetector(getApplicationContext());
         mLocationDetector = new LocationDetector(this);
+
+        // Get the activeGeofencesId string from the SharedPreference
+        String activeGeofencesId = mPrefs.getString(KEY_GEOFENCE_ID, ACTIVE_GEOFENCE_EMPTY);
+        if (!activeGeofencesId.matches(ACTIVE_GEOFENCE_EMPTY)) {
+            // Update the usedID according to activeGeofencesId
+            String activeGeofencesIdArray[] = activeGeofencesId.split("_");
+            for (String anActiveGeofencesIdArray : activeGeofencesIdArray) {
+                if (!anActiveGeofencesIdArray.isEmpty()) {
+                    usedId[Integer.parseInt(anActiveGeofencesIdArray)] = true;
+                }
+            }
+        }
     }
 
     /**
@@ -114,6 +164,20 @@ public class MapsActivity extends FragmentActivity implements
     protected void onStop() {
         // Call the mLocationDetector to stop
         mLocationDetector.stopLocationDetector();
+        // Manipulate an activeGeofencesId string to store in the SharedPreference
+        String activeGeofencesId = "_";
+        for (int i=0; i<MAX_ID; i++) {
+            if (usedId[i]) activeGeofencesId += Integer.toString(i)+"_";
+        }
+        /*
+         * Get a SharedPreferences editor instance. Among other things,
+         * SharedPreferences ensures that updates are atomic and non-concurrent
+         */
+        SharedPreferences.Editor editor = mPrefs.edit();
+        // Write the usedGeofencesId value to SharedPreferences
+        editor.putString(KEY_GEOFENCE_ID, activeGeofencesId);
+        // Commit the changes
+        editor.apply();
         super.onStop();
     }
 
@@ -241,21 +305,17 @@ public class MapsActivity extends FragmentActivity implements
             googlePlaces = new GooglePlaces();
 
             try {
-                // Separeate your place types by PIPE symbol "|"
-                // If you want all types places make it as null
-                // Check list of types supported by google
-                String types = null; // Listing all detected types of places
-
                 // Radius in meters - increase this value if you don't find any places
                 double radius = 80; // 80 meters
+                // Passing null as types will return all types of supported places found.
                 nearPlaces = googlePlaces.search(currentLocation.getLatitude(),
-                        currentLocation.getLongitude(), radius, types);
+                        currentLocation.getLongitude(), radius, null);
                 // continue searching for places until finding any place and increase the searching radius up to 160 metres
                 for (int i=1; i<8 && nearPlaces==null; i++) {
                     radius += 10;
                     // get nearest places
                     nearPlaces = googlePlaces.search(currentLocation.getLatitude(),
-                            currentLocation.getLongitude(), radius, types);
+                            currentLocation.getLongitude(), radius, null);
                 }
 
             } catch (Exception e) {
@@ -366,6 +426,10 @@ public class MapsActivity extends FragmentActivity implements
         startActivityForResult(intent, REQUEST_CODE_FOR_ADD_GEOFENCE);
     }
 
+    public void showListGeofence(View view) {
+        Intent intentList = new Intent(this, ListGeofencesActivity.class);
+        startActivity(intentList);
+    }
     /**
      * Handles Google Play Services resolution callbacks.
      */

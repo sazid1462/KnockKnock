@@ -101,6 +101,22 @@ public class SimpleGeofenceStore {
         editor.apply();
     }
 
+    public void clearGeofence(String id) {
+        /*
+         * Remove a flattened geofence object from storage by removing all of its keys
+         */
+        Editor editor = mPrefs.edit();
+        // First remove it from active geofences
+        MapsActivity.setAsInactiveGeofence(Integer.parseInt(id));
+        // Remove the keys
+        editor.remove(getGeofenceFieldKey(id, KEY_LATITUDE));
+        editor.remove(getGeofenceFieldKey(id, KEY_LONGITUDE));
+        editor.remove(getGeofenceFieldKey(id, KEY_RADIUS));
+        editor.remove(getGeofenceFieldKey(id, KEY_EXPIRATION_DURATION));
+        editor.remove(getGeofenceFieldKey(id, KEY_TRANSITION_TYPE));
+        editor.apply();
+    }
+
     /**
      * Given a Geofence object's ID and the name of the field (for example, KEY_LATITUDE),
      * return the key name of the object's values in SharedPreferences

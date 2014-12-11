@@ -64,8 +64,7 @@
     <string name="lbl_expiration">Expiration (hour):</string>
     <string name="lbl_type">Type:</string>
     <string name="lbl_help">You can set latitude and longitude here in the textboxes or you can set these from the map by tapping on the map.</string>
-    <string name="lbl_details">
-        Latitude and Longitude fields are for the center of your destination.\n\n
+    <string name="lbl_details">        Latitude and Longitude fields are for the center of your destination.\n\n
 
         Radius is the field where you can set the value of the farthest distance where you want to be reminded.\n\n
 
@@ -77,13 +76,13 @@
         Type is the field where you should specify when should you be reminded. There are three types. Enter, Exit and Both.\n
         Select Enter if you want to be reminded when you enter the area.\n
         Select Exit if you want to be reminded when you exit the area.\n
-        Select Both if you want to be reminded when you either enter or exit the area.
-    </string>
+        Select Both if you want to be reminded when you either enter or exit the area.</string>
     <string name="title_activity_details_help">DetailsHelpActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="lbl_heading_details_help">Knock Knock</string>
     <string name="btn_help">Help</string>
     <string name="lbl_approximate_address">Approximate address :</string>
     <string name="btn_got_it">OK, got it!</string>
+    <string name="title_activity_list_geofences">List Geofences</string>
 
 </resources>

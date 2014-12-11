@@ -39,10 +39,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LocationDetector"
-            android:label="@string/title_activity_location_detector" >
-        </activity>
-        <activity
             android:name=".AddGeofenceActivity"
             android:label="@string/title_activity_add_geofence"
             android:parentActivityName=".MapsActivity" >
@@ -57,6 +53,14 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.shakeme.sazedul.knockknock.AddGeofenceActivity" />
+        </activity>
+        <activity
+            android:name=".ListGeofencesActivity"
+            android:label="@string/title_activity_list_geofences"
+            android:parentActivityName=".MapsActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.shakeme.sazedul.knockknock.MapsActivity" />
         </activity>
     </application>
 
