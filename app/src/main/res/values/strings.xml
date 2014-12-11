@@ -90,5 +90,6 @@
     <string name="action_delete">Delelte Selected</string>
     <string name="lbl_name">Name</string>
     <string name="default_name">New Reminder</string>
+    <string name="clear_all">Clear All</string>
 
 </resources>

@@ -474,5 +474,10 @@ public class MapsActivity extends FragmentActivity implements
             String ids[] = data.getStringArrayExtra("GeofenceIds");
             mLocationDetector.deleteGeofences(ids);
         }
+        if (data.hasExtra("GeofenceClear")) {
+            SharedPreferences.Editor editor = mPrefs.edit();
+            editor.clear();
+            editor.apply();
+        }
     }
 }
