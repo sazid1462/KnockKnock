@@ -345,10 +345,41 @@ public class LocationDetector implements
         mLocationClient.disconnect();
     }
 
-
+    /**
+     * When the request to remove geofences by IDs returns, handle the result
+     *
+     * @param statusCode the code returned by Location Services
+     * @param geofeceRequestIds The IDs removed
+     */
     @Override
-    public void onRemoveGeofencesByRequestIdsResult(int i, String[] strings) {
-
+    public void onRemoveGeofencesByRequestIdsResult(int statusCode, String[] geofeceRequestIds) {
+        // If removing the geocodes was successfull
+        if (LocationStatusCodes.SUCCESS == statusCode) {
+            /*
+             * Handle successful removal of geofences.
+             * Show a confirmation dialog to the user
+             */
+            alert.showAlertDialog(activity, "Remove Geofences", "Your delete request for reminders is successful.", true,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        } else {
+            /*
+             * If adding the geofences failed report errors to the user
+             */
+            alert.showAlertDialog(activity, "Remove Geofences", "Sorry, your delete request for reminders is unsuccessful.\n" +
+                            "Restart the app and try again later.", false,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        }
+        // Turn off the in progress flag.
+        mInProgress = false;
+        mLocationClient.disconnect();
     }
 
     /**

@@ -64,7 +64,9 @@
     <string name="lbl_expiration">Expiration (hour):</string>
     <string name="lbl_type">Type:</string>
     <string name="lbl_help">You can set latitude and longitude here in the textboxes or you can set these from the map by tapping on the map.</string>
-    <string name="lbl_details">        Latitude and Longitude fields are for the center of your destination.\n\n
+    <string name="lbl_details">Name field is not a must for the geofence to work. It is a identifier for your convenience.\n\n
+
+        Latitude and Longitude fields are for the center of your destination.\n\n
 
         Radius is the field where you can set the value of the farthest distance where you want to be reminded.\n\n
 
@@ -85,5 +87,8 @@
     <string name="btn_got_it">OK, got it!</string>
     <string name="title_activity_list_geofences">List Geofences</string>
     <string name="btn_delete">Delete Selected</string>
+    <string name="action_delete">Delelte Selected</string>
+    <string name="lbl_name">Name</string>
+    <string name="default_name">New Reminder</string>
 
 </resources>

@@ -35,6 +35,28 @@
             android:orientation="horizontal">
 
             <TextView
+                android:text="@string/lbl_name"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:id="@+id/txt_name"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="wrap_content"
+                android:text="@string/default_name"
+                android:inputType="text"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:enabled="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
                 android:text="@string/lbl_latitude"
                 android:layout_width="0dp"
                 android:layout_weight="1"

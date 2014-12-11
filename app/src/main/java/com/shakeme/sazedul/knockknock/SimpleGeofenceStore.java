@@ -11,6 +11,7 @@ import android.content.SharedPreferences.Editor;
  */
 public class SimpleGeofenceStore {
     // Keys for flattened geofences stored in SharedPreferences
+    public static final String KEY_NAME = "com.shakeme.sazedul.knockknock.KEY_NAME";
     public static final String KEY_LATITUDE = "com.shakeme.sazedul.knockknock.KEY_LATITUDE";
     public static final String KEY_LONGITUDE = "com.shakeme.sazedul.knockknock.KEY_LONGITUDE";
     public static final String KEY_RADIUS = "com.shakeme.sazedul.knockknock.KEY_RADIUS";
@@ -24,6 +25,7 @@ public class SimpleGeofenceStore {
     public static final long INVALID_LONG_VALUE = -999l;
     public static final float INVALID_FLOAT_VALUE = -999.0f;
     public static final int INVALID_INT_VALUE = -999;
+    public static final String DEFAULT_NAME = "NEW REMINDER";
 
     // The SharedPreferences object in which geofences are stored
     private final SharedPreferences mPrefs;
@@ -41,6 +43,11 @@ public class SimpleGeofenceStore {
      * @return A geofence defined by its center and radius.
      */
     public SimpleGeofence getGeofence(String id) {
+        /*
+         * Get the name for the geofence identified by id, or
+         * INVALID_FLOAT_VALUE if it doesn't exist
+         */
+        String name = mPrefs.getString(getGeofenceFieldKey(id, KEY_NAME), DEFAULT_NAME);
         /*
          * Get the latitude for the geofence identified by id, or
          * INVALID_FLOAT_VALUE if it doesn't exist
@@ -73,7 +80,7 @@ public class SimpleGeofenceStore {
                 radius != INVALID_FLOAT_VALUE && transitionType != INVALID_INT_VALUE) {
             // Return a true Geofence object
             System.out.println("YOUR FUCKING ID IS "+id);
-            return new SimpleGeofence(id, lat, lng, radius, expirationDuration, transitionType);
+            return new SimpleGeofence(id, name, lat, lng, radius, expirationDuration, transitionType);
         } else {
             System.out.println("FUCKING NULL IS GONNA RETURNED");
             return null;
@@ -93,7 +100,8 @@ public class SimpleGeofenceStore {
          * SharedPreferences ensures that updates are atomic and non-concurrent
          */
         Editor editor = mPrefs.edit();
-        // Write the Geofence vaues to SharedPreferences
+        // Write the Geofence values to SharedPreferences
+        editor.putString(getGeofenceFieldKey(id, KEY_NAME), geofence.getName());
         editor.putFloat(getGeofenceFieldKey(id, KEY_LATITUDE), geofence.getLatitude().floatValue());
         editor.putFloat(getGeofenceFieldKey(id, KEY_LONGITUDE), geofence.getLongitude().floatValue());
         editor.putFloat(getGeofenceFieldKey(id, KEY_RADIUS), geofence.getRadius());
@@ -111,6 +119,7 @@ public class SimpleGeofenceStore {
         // First remove it from active geofences
         MapsActivity.setAsInactiveGeofence(Integer.parseInt(id));
         // Remove the keys
+        editor.remove(getGeofenceFieldKey(id, KEY_NAME));
         editor.remove(getGeofenceFieldKey(id, KEY_LATITUDE));
         editor.remove(getGeofenceFieldKey(id, KEY_LONGITUDE));
         editor.remove(getGeofenceFieldKey(id, KEY_RADIUS));

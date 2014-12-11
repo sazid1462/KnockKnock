@@ -35,6 +35,9 @@ public class AddGeofenceActivity extends ActionBarActivity
     // Select a place
     Place place;
 
+    // Connection detector class
+    NetworkConnectivityDetector nCDetector;
+
     // Details of a place data
     PlaceDetails placeDetails;
 
@@ -52,6 +55,7 @@ public class AddGeofenceActivity extends ActionBarActivity
     private static final long MILLISECONDS_PER_SECOND = 1000;
 
     // For the reference of UI elements
+    private EditText txtName;
     private EditText txtLatitude;
     private EditText txtLongitude;
     private EditText txtRadius;
@@ -84,6 +88,7 @@ public class AddGeofenceActivity extends ActionBarActivity
 
         // Get the latitude and longitude from the intent
         intent = getIntent();
+        txtName = (EditText) findViewById(R.id.txt_name);
         txtLatitude = (EditText) findViewById(R.id.txt_latitude);
         txtLongitude = (EditText) findViewById(R.id.txt_longitude);
         txtRadius = (EditText) findViewById(R.id.txt_radius);
@@ -167,12 +172,15 @@ public class AddGeofenceActivity extends ActionBarActivity
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
         if (isValidLatitudeValue(txtLatitude.getText().toString()) &&
-                isValidLongitudeValue(txtLongitude.getText().toString()))
-            new LoadPlaces().execute();
+                isValidLongitudeValue(txtLongitude.getText().toString())) {
+            if (nCDetector.isConnectionToInternetAvailable()) {
+                new LoadPlaces().execute();
+            }
+        }
         else runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                txtAddress.setText("Invalid latitude or longitude!");
+            txtAddress.setText("Invalid latitude or longitude!");
             }
         });
     }
@@ -327,6 +335,7 @@ public class AddGeofenceActivity extends ActionBarActivity
     public void addReminder(View view) {
         Intent intentReminder = new Intent();
         intentReminder.putExtra("GeofenceData", "Data successfully acquired.");
+        intentReminder.putExtra("GeofenceName", txtName.getText().toString());
         intentReminder.putExtra("GeofenceLat", Double.parseDouble(txtLatitude.getText().toString()));
         intentReminder.putExtra("GeofenceLng", Double.parseDouble(txtLongitude.getText().toString()));
         intentReminder.putExtra("GeofenceRad", Float.parseFloat(txtRadius.getText().toString()));

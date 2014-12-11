@@ -25,12 +25,15 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
 
-import static java.lang.System.exit;
-
 public class MapsActivity extends FragmentActivity implements
         GoogleMap.OnMapClickListener {
 
     private static final String TAG = "MapActivity";
+    // RequestCode for starting ListGeofenceActivity for the result
+    private static final int REQUEST_CODE_FOR_LIST_GEOFENCE = 3;
+    // RequestCode for starting AddGeofenceActivity for the result
+    private static final int REQUEST_CODE_FOR_ADD_GEOFENCE = 1;
+
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
     private TextView mCurrentLocation;
@@ -57,6 +60,7 @@ public class MapsActivity extends FragmentActivity implements
     public static final long INVALID_LONG_VALUE = -999l;
     public static final float INVALID_FLOAT_VALUE = -999.0f;
     public static final int INVALID_INT_VALUE = -999;
+    private static final String DEFAULT_NAME = "New Reminder";
 
     // The name of the SharedPreferences
     private static final String SHARED_PREFERENCES = "KnockKnockSharedPreferences";
@@ -78,9 +82,6 @@ public class MapsActivity extends FragmentActivity implements
 
     // Extra Message prefix
     public static final String PREFIX = "com.shakeme.sazedul.knockknock";
-
-    // RequestCode for starting AddGeofenceActivity for the result
-    private static final int REQUEST_CODE_FOR_ADD_GEOFENCE = 1;
 
     // The MAX ID of a geofence
     private static final int MAX_ID = 100;
@@ -118,7 +119,7 @@ public class MapsActivity extends FragmentActivity implements
                 return Integer.toString((geofenceID) + 1);
             }
         }
-        System.out.println("GETNEXTGEOFENCEID is RETURNING -1");
+        //System.out.println("GETNEXTGEOFENCEID is RETURNING -1");
         return "-1";
     }
 
@@ -206,11 +207,11 @@ public class MapsActivity extends FragmentActivity implements
         if (!isInternetPresent) {
             // Internet Connection is not present
             alert.showAlertDialog(this, "Internet Connection Error",
-                    "Please connect to the Internet. Closing the app.", false,
+                    "Please connect to the Internet for full app services.", false,
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            exit(1);
+                            //exit(1);
                         }
                     });
             // stop executing code by return
@@ -287,7 +288,9 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onMyLocationChange(Location location) {
                 currentLocation = location;
-                new LoadPlaces().execute();
+                if (nCDetector.isConnectionToInternetAvailable()) {
+                    new LoadPlaces().execute();
+                }
             }
         });
 
@@ -367,7 +370,7 @@ public class MapsActivity extends FragmentActivity implements
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                exit(1);
+                                //exit(1);
                             }
                         });
             }
@@ -443,7 +446,7 @@ public class MapsActivity extends FragmentActivity implements
 
     public void showListGeofence(View view) {
         Intent intentList = new Intent(this, ListGeofencesActivity.class);
-        startActivity(intentList);
+        startActivityForResult(intentList, REQUEST_CODE_FOR_LIST_GEOFENCE);
     }
     /**
      * Handles Google Play Services resolution callbacks.
@@ -452,15 +455,24 @@ public class MapsActivity extends FragmentActivity implements
         mLocationDetector.onActivityResult(requestCode, resultCode, data);
         if (data == null) return;
         if (data.hasExtra("GeofenceData")) {
+            String name = data.getStringExtra("GeofenceName");
             double lat = data.getDoubleExtra("GeofenceLat", INVALID_FLOAT_VALUE);
             double lng = data.getDoubleExtra("GeofenceLng", INVALID_FLOAT_VALUE);
             float rad = data.getFloatExtra("GeofenceRad", INVALID_FLOAT_VALUE);
             long exp = data.getLongExtra("GeofenceExp", INVALID_LONG_VALUE);
             int type = data.getIntExtra("GeofenceType", INVALID_INT_VALUE);
 
-            System.err.println("CREATING GEOFENCE : LAT "+lat+" LNG "+lng+" rad "+rad);
+            //System.err.println("CREATING GEOFENCE : LAT "+lat+" LNG "+lng+" rad "+rad);
 
-            mLocationDetector.createGeofence(lat, lng, rad, exp, type);
+            mLocationDetector.createGeofence(name, lat, lng, rad, exp, type);
+        }
+        if (data.hasExtra("GeofenceShow")) {
+            String id = data.getStringExtra("GeofenceId");
+            // TODO
+        }
+        if (data.hasExtra("GeofenceDelete")) {
+            String ids[] = data.getStringArrayExtra("GeofenceIds");
+            mLocationDetector.deleteGeofences(ids);
         }
     }
 }

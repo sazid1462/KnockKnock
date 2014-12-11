@@ -8,6 +8,7 @@ import com.google.android.gms.location.Geofence;
 public class SimpleGeofence {
     // Instance variables
     private final String mId;
+    private final String mName;
     private final Double mLatitude;
     private final Double mLongitude;
     private final float mRadius;
@@ -23,9 +24,10 @@ public class SimpleGeofence {
      * @param mExpirationDuration Geofence expiration duration
      * @param mTransitionType Type of Geofence transition
      */
-    public SimpleGeofence(String mId, Double mLatitude, Double mLongitude, float mRadius, long mExpirationDuration, int mTransitionType) {
+    public SimpleGeofence(String mId, String mName, Double mLatitude, Double mLongitude, float mRadius, long mExpirationDuration, int mTransitionType) {
         // Set the instance fields from the constructor
         this.mId = mId;
+        this.mName = mName;
         this.mLatitude = mLatitude;
         this.mLongitude = mLongitude;
         this.mRadius = mRadius;
@@ -36,6 +38,10 @@ public class SimpleGeofence {
     // Instance field getters
     public String getId() {
         return mId;
+    }
+
+    public String getName() {
+        return mName;
     }
 
     public Double getLatitude() {
