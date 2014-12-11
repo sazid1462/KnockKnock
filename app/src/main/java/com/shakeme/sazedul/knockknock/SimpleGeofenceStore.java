@@ -139,4 +139,8 @@ public class SimpleGeofenceStore {
     private String getGeofenceFieldKey(String id, String fieldName) {
         return KEY_PREFIX + "_" + id + "_" + fieldName;
     }
+
+    public void clearAll() {
+
+    }
 }

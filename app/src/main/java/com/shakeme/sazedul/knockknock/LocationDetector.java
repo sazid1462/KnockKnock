@@ -76,6 +76,11 @@ public class LocationDetector implements
     SharedPreferences mPrefs;
     SharedPreferences.Editor mEditor;
 
+    public void clearAllGeofences() {
+        mEditor.clear();
+        mEditor.apply();
+    }
+
     // Defines the allowable request types
     public enum REQUEST_TYPE {
         ADD,
@@ -157,7 +162,7 @@ public class LocationDetector implements
 
     public void startLocationDetector() {
         // Open the shared preferences
-        mPrefs = activity.getSharedPreferences("SharedPreferences",
+        mPrefs = activity.getSharedPreferences("KnockKnockSharedPreferences",
                 Context.MODE_PRIVATE);
         // Get a SharedPreferences editor
         mEditor = mPrefs.edit();
@@ -315,14 +320,17 @@ public class LocationDetector implements
     }
 
     @Override
-    public void onAddGeofencesResult(int statusCode, String[] strings) {
+    public void onAddGeofencesResult(int statusCode, String[] geofenceRequestIds) {
         // If adding the geofences was successful
         if (LocationStatusCodes.SUCCESS == statusCode) {
             /*
              * Handle successful addition of geofences.
              * Show a confirmation dialog to the user
              */
-            alert.showAlertDialog(activity, "Add Reminder", "Your reminder for the location "+strings[0]+" is successful.", true,
+            for (int i=0; i<geofenceRequestIds.length; i++) {
+                MapsActivity.setAsActiveGeofence(Integer.parseInt(geofenceRequestIds[i]));
+            }
+            alert.showAlertDialog(activity, "Add Reminder", "Your reminder for the location "+geofenceRequestIds[0]+" is successful.", true,
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -332,7 +340,7 @@ public class LocationDetector implements
             /*
              * If adding the geofences failed report errors to the user
              */
-            alert.showAlertDialog(activity, "Add Reminder", "Sorry, your reminder for the location "+strings[0]+" is unsuccessful.\n" +
+            alert.showAlertDialog(activity, "Add Reminder", "Sorry, your reminder for the location "+ geofenceRequestIds[0]+" is unsuccessful.\n" +
                             "Restart the app and try again later.", false,
                     new DialogInterface.OnClickListener() {
                         @Override
@@ -349,16 +357,20 @@ public class LocationDetector implements
      * When the request to remove geofences by IDs returns, handle the result
      *
      * @param statusCode the code returned by Location Services
-     * @param geofeceRequestIds The IDs removed
+     * @param geofenceRequestIds The IDs removed
      */
     @Override
-    public void onRemoveGeofencesByRequestIdsResult(int statusCode, String[] geofeceRequestIds) {
+    public void onRemoveGeofencesByRequestIdsResult(int statusCode, String[] geofenceRequestIds) {
         // If removing the geocodes was successfull
         if (LocationStatusCodes.SUCCESS == statusCode) {
             /*
              * Handle successful removal of geofences.
              * Show a confirmation dialog to the user
              */
+            for (int i=0; i<geofenceRequestIds.length; i++) {
+                MapsActivity.setAsInactiveGeofence(Integer.parseInt(geofenceRequestIds[i]));
+                mGeofenceStorage.clearGeofence(geofenceRequestIds[i]);
+            }
             alert.showAlertDialog(activity, "Remove Geofences", "Your delete request for reminders is successful.", true,
                     new DialogInterface.OnClickListener() {
                         @Override
@@ -396,6 +408,7 @@ public class LocationDetector implements
              * Handle successful removal of geofences.
              * Show a confirmation dialog to the user
              */
+            mGeofenceStorage.clearAll();
             alert.showAlertDialog(activity, "Stop Tracking Reminders", "Your stop request for all reminders is successful.", true,
                     new DialogInterface.OnClickListener() {
                         @Override
@@ -435,10 +448,11 @@ public class LocationDetector implements
          */
         String id = MapsActivity.getNextGeofenceID();
         if (!id.matches("-1")) {
-            SimpleGeofence mSimpleGeofence = new SimpleGeofence(id, name, latitude, longitude, radius, expiration < 0 ? -1 : expiration, type);
+            SimpleGeofence mSimpleGeofence = new SimpleGeofence(id, name, latitude, longitude, radius,
+                    expiration < 0 ? Geofence.NEVER_EXPIRE : expiration, type);
             // Store this flat version
             mGeofenceStorage.setGeofence(mSimpleGeofence.getId(), mSimpleGeofence);
-            mCurrentGeofences.add(mSimpleGeofence.toGeofence());;
+            mCurrentGeofences.add(mSimpleGeofence.toGeofence());
             addGeofences();
         } else {
             alert.showAlertDialog(activity, "Knock Knock", "Sorry, no more geofence is available!", false, new DialogInterface.OnClickListener() {

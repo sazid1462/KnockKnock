@@ -112,10 +112,12 @@ public class MapsActivity extends FragmentActivity implements
         usedId[id] = false;
     }
 
+    public static void setAsActiveGeofence(int id) {
+        usedId[id] = true;
+    }
     public static String getNextGeofenceID () {
         for (int geofenceID=0; geofenceID<MAX_ID; geofenceID++) {
             if (!usedId[geofenceID]) {
-                usedId[geofenceID] = true;
                 return Integer.toString((geofenceID) + 1);
             }
         }
@@ -475,9 +477,7 @@ public class MapsActivity extends FragmentActivity implements
             mLocationDetector.deleteGeofences(ids);
         }
         if (data.hasExtra("GeofenceClear")) {
-            SharedPreferences.Editor editor = mPrefs.edit();
-            editor.clear();
-            editor.apply();
+            mLocationDetector.clearAllGeofences();
         }
     }
 }
