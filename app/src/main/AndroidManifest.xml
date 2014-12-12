@@ -23,11 +23,6 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
 
-        <service android:name=".ReceiveGeofenceTransitionsIntentService"
-            android:label="@string/app_name"
-            android:exported="false">
-        </service>
-
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -68,5 +63,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.shakeme.sazedul.knockknock.MapsActivity" />
         </activity>
+        <service android:name=".GeofenceReceiver" android:exported="false"></service>
     </application>
 </manifest>

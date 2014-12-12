@@ -1,5 +1,6 @@
 package com.shakeme.sazedul.knockknock;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -18,7 +19,7 @@ import java.util.Vector;
 public class ListGeofencesActivity extends ActionBarActivity
         implements ListView.OnItemLongClickListener,
         ListView.OnItemClickListener {
-    private static final int MAX_ID = 100;
+
     Map<Integer, String> map;
 
     ListView mListGeofence;
@@ -32,18 +33,17 @@ public class ListGeofencesActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_geofences);
         Vector<String> list = new Vector<>();
-        mGeofenceStorage = new SimpleGeofenceStore(this);
+        mGeofenceStorage = new SimpleGeofenceStore(this, Context.MODE_APPEND);
         map = new HashMap<>();
         checkedCount = 0;
 
         mListGeofence = (ListView) findViewById(R.id.geofence_list);
-        for (int i=0; i<MAX_ID; i++) {
-            if (MapsActivity.isActiveGeofence(i)) {
-                SimpleGeofence geofence = mGeofenceStorage.getGeofence(Integer.toString(i+1));
-                if (geofence != null) {
-                    list.add(geofence.getName());
-                    map.put(i, geofence.getId());
-                }
+        for (int i=0; i<GeofenceUtils.MAX_ID; i++) {
+            SimpleGeofence geofence = mGeofenceStorage.getGeofence(Integer.toString(i));
+            if (geofence != null) {
+                list.add(geofence.getName());
+                map.put(i, geofence.getId());
+                System.err.println("ADDED GEOFENCE TO LIST VIEW "+geofence.getId()+" "+geofence.getName());
             }
         }
         checkedItem = new boolean[list.size()];

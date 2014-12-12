@@ -41,19 +41,6 @@ public class AddGeofenceActivity extends ActionBarActivity
     // Details of a place data
     PlaceDetails placeDetails;
 
-    // Extra Message prefix
-    public static final String PREFIX = "com.shakeme.sazedul.knockknock";
-
-    // To set the invalid latitude or longitude value if the text fields contain invalid data
-    private static final float INVALID_FLOAT_VALUE = -999f;
-
-    /*
-     * Use to set an expiration time for a geofence. After this amount of time Location Services
-     * will stop tracking the geofence
-     */
-    private static final long SECOND_PER_HOUR = 60;
-    private static final long MILLISECONDS_PER_SECOND = 1000;
-
     // For the reference of UI elements
     private EditText txtName;
     private EditText txtLatitude;
@@ -69,14 +56,14 @@ public class AddGeofenceActivity extends ActionBarActivity
 
     private boolean isValidLatitudeValue(String value) {
         double lat;
-        if (value.matches("")) lat = INVALID_FLOAT_VALUE;
+        if (value.matches("")) lat = GeofenceUtils.INVALID_FLOAT_VALUE;
         else lat = Double.parseDouble(value);
         return lat >= -85f && lat <= 85f;
     }
 
     private boolean isValidLongitudeValue(String value) {
         double lng;
-        if (value.matches("")) lng = INVALID_FLOAT_VALUE;
+        if (value.matches("")) lng = GeofenceUtils.INVALID_FLOAT_VALUE;
         else lng = Double.parseDouble(value);
         return lng >= -180f && lng <= 180f;
     }
@@ -86,6 +73,7 @@ public class AddGeofenceActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_geofence);
 
+        nCDetector = new NetworkConnectivityDetector(this);
         // Get the latitude and longitude from the intent
         intent = getIntent();
         txtName = (EditText) findViewById(R.id.txt_name);
@@ -97,7 +85,7 @@ public class AddGeofenceActivity extends ActionBarActivity
         txtAddress = (TextView) findViewById(R.id.txt_place_address);
 
         // The default value of type (Both);
-        mType = Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT;
+        mType = Geofence.GEOFENCE_TRANSITION_ENTER;
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.geofence_type_array, android.R.layout.simple_spinner_item);
@@ -107,16 +95,17 @@ public class AddGeofenceActivity extends ActionBarActivity
         spinnerTypes.setAdapter(adapter);
         spinnerTypes.setOnItemSelectedListener(this);
 
+        txtName.setOnFocusChangeListener(this);
         txtLatitude.setOnFocusChangeListener(this);
         txtLongitude.setOnFocusChangeListener(this);
         txtRadius.setOnFocusChangeListener(this);
         txtExpirationDuration.setOnFocusChangeListener(this);
 
-        if (intent.hasExtra(PREFIX+".latlng")) {
+        if (intent.hasExtra(GeofenceUtils.PREFIX+".latlng")) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    double extra[] = intent.getDoubleArrayExtra(PREFIX+".latlng");
+                    double extra[] = intent.getDoubleArrayExtra(GeofenceUtils.PREFIX+".latlng");
 
                     txtLatitude.setText(Double.toString(extra[0]));
                     txtLongitude.setText(Double.toString(extra[1]));
@@ -339,7 +328,8 @@ public class AddGeofenceActivity extends ActionBarActivity
         intentReminder.putExtra("GeofenceLat", Double.parseDouble(txtLatitude.getText().toString()));
         intentReminder.putExtra("GeofenceLng", Double.parseDouble(txtLongitude.getText().toString()));
         intentReminder.putExtra("GeofenceRad", Float.parseFloat(txtRadius.getText().toString()));
-        intentReminder.putExtra("GeofenceExp", Long.parseLong(txtExpirationDuration.getText().toString()));
+        intentReminder.putExtra("GeofenceExp", Long.parseLong(txtExpirationDuration.getText().toString())
+                *GeofenceUtils.SECOND_PER_HOUR*GeofenceUtils.MILLISECONDS_PER_SECOND);
         intentReminder.putExtra("GeofenceType", mType);
         setResult(RESULT_OK, intentReminder);
         finish();
