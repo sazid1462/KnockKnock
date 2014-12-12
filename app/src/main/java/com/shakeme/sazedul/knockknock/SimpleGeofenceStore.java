@@ -180,6 +180,8 @@ public class SimpleGeofenceStore {
     }
 
      public void clearAllGeofences() {
-
+         Editor editor = mPrefs.edit();
+         editor.clear();
+         editor.commit();
      }
  }

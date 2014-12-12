@@ -1,6 +1,5 @@
 package com.shakeme.sazedul.knockknock;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,8 +14,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.location.Geofence;
-
-import static java.lang.System.exit;
 
 
 public class AddGeofenceActivity extends ActionBarActivity
@@ -237,15 +234,6 @@ public class AddGeofenceActivity extends ActionBarActivity
             }
             else {
                 // Zero results found
-                alert.showAlertDialog(AddGeofenceActivity.this, "Knock Knock",
-                        "Can not retrieve any address",
-                        false,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                exit(1);
-                            }
-                        });
             }
 
         }

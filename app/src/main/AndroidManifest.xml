@@ -63,6 +63,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.shakeme.sazedul.knockknock.MapsActivity" />
         </activity>
-        <service android:name=".GeofenceReceiver" android:exported="false"></service>
+        <service
+            android:name="ReceiveTransitionsIntentService"
+            android:exported="false"
+            android:enabled="true"
+            android:icon="@drawable/ic_launcher">
+        </service>
     </application>
 </manifest>

@@ -95,7 +95,7 @@ public class MapsActivity extends FragmentActivity implements
      * An instance of an inner class that receives broadcasts from listeners and from the
      * IntentService that receives geofence transition events
      */
-    private GeofenceSampleReceiver mBroadcastReceiver;
+    private GeofenceReceiver mBroadcastReceiver;
 
     // An intent filter for the broadcast receiver
     private IntentFilter mIntentFilter;
@@ -176,7 +176,7 @@ public class MapsActivity extends FragmentActivity implements
         mRadiusFormat.applyLocalizedPattern(mRadiusFormat.toLocalizedPattern());
 
         // Create a new broadcast receiver to receive updates from the listeners and service
-        mBroadcastReceiver = new GeofenceSampleReceiver();
+        mBroadcastReceiver = new GeofenceReceiver();
 
         // Create an intent filter for the broadcast receiver
         mIntentFilter = new IntentFilter();
@@ -575,19 +575,6 @@ public class MapsActivity extends FragmentActivity implements
                     //mCurrentLocation.setText(place.id);
                 }
             }
-            else {
-                // Zero results found
-                alert.showAlertDialog(MapsActivity.this, "Knock Knock",
-                        "Can not retrieve any address",
-                        false,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                //exit(1);
-                            }
-                        });
-            }
-
         }
 
     }
@@ -744,7 +731,10 @@ public class MapsActivity extends FragmentActivity implements
                         if (intent.hasExtra("GeofenceDelete")) {
                             String ids[] = intent.getStringArrayExtra("GeofenceIds");
                             ArrayList<String> geofencesToBeDelete = new ArrayList<>();
-                            for (int i=0; i<ids.length; i++) geofencesToBeDelete.add(ids[i]);
+                            for (int i=0; i<ids.length; i++) {
+                                geofencesToBeDelete.add(ids[i]);
+                                mPrefs.clearGeofence(ids[i]);
+                            }
                             removeGeofences(geofencesToBeDelete);
                         }
                         if (intent.hasExtra("GeofenceClear")) {
@@ -762,7 +752,7 @@ public class MapsActivity extends FragmentActivity implements
      * Define a Broadcast receiver that receives updates from connection listeners and
      * the geofence transition service.
      */
-    public class GeofenceSampleReceiver extends BroadcastReceiver {
+    public class GeofenceReceiver extends BroadcastReceiver {
         /*
          * Define the required method for broadcast receivers
          * This method is invoked when a broadcast Intent triggers the receiver
