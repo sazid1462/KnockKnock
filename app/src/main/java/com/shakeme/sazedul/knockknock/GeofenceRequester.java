@@ -280,7 +280,7 @@ public class GeofenceRequester
         } else {
 
             // Create an Intent pointing to the IntentService
-            //Intent intent = new Intent(mActivity, GeofenceReceiver.class); TODO
+            //Intent intent = new Intent(mActivity, MapsActivity.GeofenceReceiver.class);
             //Intent intent = new Intent(mActivity, GeofenceIntentService.class);
             Intent intent = new Intent(mActivity, ReceiveTransitionsIntentService.class);
             /*

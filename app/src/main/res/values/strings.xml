@@ -78,7 +78,7 @@
     <string name="btn_got_it">OK, got it!</string>
     <string name="title_activity_list_geofences">List Geofences</string>
     <string name="btn_delete">Delete Selected</string>
-    <string name="action_delete">Delelte Selected</string>
+    <string name="action_delete">Delete Selected</string>
     <string name="lbl_name">Name</string>
     <string name="default_name">New Reminder</string>
     <string name="clear_all">Clear All</string>

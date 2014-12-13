@@ -12,8 +12,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
+import android.media.RingtoneManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.LocalBroadcastManager;
@@ -102,6 +104,8 @@ public class MapsActivity extends FragmentActivity implements
     private GeofenceReceiver mBroadcastReceiver;
 
     private boolean isFindingPlace;
+    private static final long MINIMUM_TIME_BETWWEEN_FINDING_PLACE_CALLS = 10*GeofenceUtils.MILLISECONDS_PER_SECOND;
+    private long lastReqForFindingPlace = 0;
 
     // An intent filter for the broadcast receiver
     private IntentFilter mIntentFilter;
@@ -524,8 +528,11 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onMyLocationChange(Location location) {
                 currentLocation = location;
-                if (nCDetector.isConnectionToInternetAvailable() && !isFindingPlace) {
-                    new LoadPlaces().execute();
+                if (nCDetector.isConnectionToInternetAvailable()) {
+                    long currTime = System.currentTimeMillis();
+                    if (!isFindingPlace && currTime-lastReqForFindingPlace > MINIMUM_TIME_BETWWEEN_FINDING_PLACE_CALLS) {
+                        new LoadPlaces().execute();
+                    }
                 }
             }
         });
@@ -550,6 +557,7 @@ public class MapsActivity extends FragmentActivity implements
         protected void onPreExecute() {
             super.onPreExecute();
             isFindingPlace = true;
+            lastReqForFindingPlace = System.currentTimeMillis();
         }
 
         /**
@@ -777,7 +785,6 @@ public class MapsActivity extends FragmentActivity implements
          */
         @Override
         public void onReceive(Context context, Intent intent) {
-
             // Check the action code and determine what to do
             String action = intent.getAction();
 
@@ -813,6 +820,18 @@ public class MapsActivity extends FragmentActivity implements
          * @param intent The received broadcast Intent
          */
         private void handleGeofenceStatus(Context context, Intent intent) {
+            // Check the action code and determine what to do
+            String action = intent.getAction();
+
+            if (TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCES_ADDED)) {
+                Toast.makeText(context, "Your request for geofence is successfully added.",
+                        Toast.LENGTH_LONG).show();
+            }
+            else if (TextUtils.equals(action, GeofenceUtils.ACTION_GEOFENCES_REMOVED)) {
+                Toast.makeText(context, "You request for removing geofences was successful.",
+                        Toast.LENGTH_LONG).show();
+            }
+
 
         }
 
@@ -828,7 +847,19 @@ public class MapsActivity extends FragmentActivity implements
              * here. The current design of the app uses a notification to inform the
              * user that a transition has occurred.
              */
+            // Vibrate the mobile phone
+            Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            RingtoneManager ringer = new RingtoneManager(MapsActivity.this);
+            // Get the type of transition (entry or exit)
 
+            String ids = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_ID);
+            String transitionType = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_TRANSITION_TYPE);
+
+            Toast.makeText(context, "You have "+transitionType+" geofence(s) "+ids+".",
+                    Toast.LENGTH_LONG).show();
+            // Vibrate the mobile phone
+            vibrator.vibrate(1000);
+            ringer.getRingtone(ringer.getCursor().getPosition()).play();
         }
 
         /**

@@ -125,6 +125,9 @@ public class SimpleGeofenceStore {
         Editor editor = mPrefs.edit();
 
         // Write the Geofence values to SharedPreferences
+        editor.putString(getGeofenceFieldKey(id, GeofenceUtils.KEY_NAME),
+                geofence.getName());
+
         editor.putFloat(
                 getGeofenceFieldKey(id, GeofenceUtils.KEY_LATITUDE),
                 geofence.getLatitude().floatValue());

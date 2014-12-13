@@ -93,6 +93,12 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
                 sendNotification(transitionType, ids);
 
+                broadcastIntent.setAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION)
+                        .putExtra(GeofenceUtils.EXTRA_GEOFENCE_ID, ids)
+                        .putExtra(GeofenceUtils.EXTRA_GEOFENCE_TRANSITION_TYPE, transitionType);
+
+                LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
+
                 // Log the transition type and a message
                 Log.d(GeofenceUtils.APPTAG,
                         getString(
@@ -127,11 +133,13 @@ public class ReceiveTransitionsIntentService extends IntentService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
+                new NotificationCompat.Builder(getApplicationContext())
                         .setSmallIcon(R.drawable.ic_notification)
                         .setContentTitle(transitionType)
                         .setContentText(ids)
                         .setContentIntent(pendingIntent)
+                        .setAutoCancel(true)
+                        .setCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES)
                         .setDefaults(Notification.DEFAULT_SOUND)
                         .setWhen(when);
 
