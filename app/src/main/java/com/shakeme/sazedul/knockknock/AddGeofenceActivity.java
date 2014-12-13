@@ -1,9 +1,15 @@
 package com.shakeme.sazedul.knockknock;
 
+/**
+ * This Class is the activity class for getting user input of adding a geofence
+ *
+ * Created by Sazedul on 5-Dec-14.
+ */
+
+import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -12,16 +18,14 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
 
 
-public class AddGeofenceActivity extends ActionBarActivity
+public class AddGeofenceActivity extends Activity
         implements AdapterView.OnItemSelectedListener,
         EditText.OnFocusChangeListener{
-
-    // Alert Dialog Manager
-    MessageDialogueViewer alert = new MessageDialogueViewer();
 
     // Google Places
     GooglePlaces googlePlaces;
@@ -32,7 +36,7 @@ public class AddGeofenceActivity extends ActionBarActivity
     // Select a place
     Place place;
 
-    // Connection detector class
+    // NetworkConnectivityDetector class' object
     NetworkConnectivityDetector nCDetector;
 
     // Details of a place data
@@ -48,28 +52,55 @@ public class AddGeofenceActivity extends ActionBarActivity
     private TextView txtAddress;
     private Intent intent;
 
-    // Type of the geofence
+    // Type of the geofence according to the selection of types from the spinnerTypes
     private int mType;
 
+    /**
+     * Checks if the Latitude value is a valid Latitude or not
+     *
+     * @param value The value to be checked
+     * @return true/false
+     */
     private boolean isValidLatitudeValue(String value) {
         double lat;
         if (value.matches("")) lat = GeofenceUtils.INVALID_FLOAT_VALUE;
         else lat = Double.parseDouble(value);
-        return lat >= -85f && lat <= 85f;
+        return lat >= GeofenceUtils.MIN_LATITUDE && lat <= GeofenceUtils.MAX_LATITUDE;
     }
 
+    /**
+     * Checks if the Longitude value is a valid Longitude or not
+     *
+     * @param value The value to be checked
+     * @return true/false
+     */
     private boolean isValidLongitudeValue(String value) {
         double lng;
         if (value.matches("")) lng = GeofenceUtils.INVALID_FLOAT_VALUE;
         else lng = Double.parseDouble(value);
-        return lng >= -180f && lng <= 180f;
+        return lng >= GeofenceUtils.MIN_LONGITUDE && lng <= GeofenceUtils.MAX_LONGITUDE;
     }
 
+    /**
+     * Checks if the Radius value is a valid Radius or not
+     *
+     * @param value The value to be checked
+     * @return true/false
+     */
+    private boolean isValidRadius(String value) {
+        Float rad;
+        if (value.matches("")) rad = GeofenceUtils.INVALID_FLOAT_VALUE;
+        else rad = Float.parseFloat(value);
+        return rad >= GeofenceUtils.MIN_RADIUS;
+    }
+
+    // This function is called when the activity is first created
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_geofence);
 
+        // Instantiate the NetworkConnectivityDetector class' object
         nCDetector = new NetworkConnectivityDetector(this);
         // Get the latitude and longitude from the intent
         intent = getIntent();
@@ -81,9 +112,10 @@ public class AddGeofenceActivity extends ActionBarActivity
         spinnerTypes = (Spinner) findViewById(R.id.spinner_type);
         txtAddress = (TextView) findViewById(R.id.txt_place_address);
 
-        // The default value of type (Both);
+        // The default value of type (Enter);
         mType = Geofence.GEOFENCE_TRANSITION_ENTER;
 
+        // Adapter for the spinnerTypes
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.geofence_type_array, android.R.layout.simple_spinner_item);
         // Specify the layout to use when the list of choices appears
@@ -92,11 +124,18 @@ public class AddGeofenceActivity extends ActionBarActivity
         spinnerTypes.setAdapter(adapter);
         spinnerTypes.setOnItemSelectedListener(this);
 
+        // Set the listeners for the EditText views
         txtName.setOnFocusChangeListener(this);
         txtLatitude.setOnFocusChangeListener(this);
         txtLongitude.setOnFocusChangeListener(this);
         txtRadius.setOnFocusChangeListener(this);
         txtExpirationDuration.setOnFocusChangeListener(this);
+
+        /*
+         * Check the intent's extra to know whether it is created by clicking the Add New Reminder
+         * button or by clicking on the map. If it is created from clicking on the map then update the
+         * Latitude and Longitude value in the text fields
+         */
 
         if (intent.hasExtra(GeofenceUtils.PREFIX+".latlng")) {
             runOnUiThread(new Runnable() {
@@ -127,11 +166,6 @@ public class AddGeofenceActivity extends ActionBarActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -157,25 +191,28 @@ public class AddGeofenceActivity extends ActionBarActivity
 
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
+        // If Latitude and Longitude values are correct then try to get the approximate location
+        // from Google Places API
         if (isValidLatitudeValue(txtLatitude.getText().toString()) &&
                 isValidLongitudeValue(txtLongitude.getText().toString())) {
             if (nCDetector.isConnectionToInternetAvailable()) {
+                // Run the thread
                 new LoadPlaces().execute();
             }
         }
         else runOnUiThread(new Runnable() {
             @Override
             public void run() {
-            txtAddress.setText("Invalid latitude or longitude!");
+                txtAddress.setText("Invalid latitude or longitude!");
             }
         });
     }
 
+    /**
+     * This Async Task will try to find some places near your place using Google Places API
+     */
     class LoadPlaces extends AsyncTask<String, String, String> {
 
-        /**
-         * Before starting background thread Show Progress Dialog
-         * */
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -189,22 +226,15 @@ public class AddGeofenceActivity extends ActionBarActivity
             googlePlaces = new GooglePlaces();
 
             try {
-                // Separeate your place types by PIPE symbol "|"
+                // Separate your place types by PIPE symbol "|"
                 // If you want all types places make it as null
                 // Check list of types supported by google
                 String types = null; // Listing all detected types of places
 
                 // Radius in meters - increase this value if you don't find any places
-                double radius = 80; // 80 meters
+                double radius = 100; // 100 meters
                 nearPlaces = googlePlaces.search(Double.parseDouble(txtLatitude.getText().toString()),
                         Double.parseDouble(txtLongitude.getText().toString()), radius, types);
-                // continue searching for places until finding any place and increase the searching radius up to 160 metres
-                for (int i=1; i<8 && nearPlaces==null; i++) {
-                    radius += 10;
-                    // get nearest places
-                    nearPlaces = googlePlaces.search(Double.parseDouble(txtLatitude.getText().toString()),
-                            Double.parseDouble(txtLongitude.getText().toString()), radius, types);
-                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -213,11 +243,11 @@ public class AddGeofenceActivity extends ActionBarActivity
         }
 
         /**
-         * After completing background task Dismiss the progress dialog
-         * and show the data in UI
+         * After completing background task of getting places near your place try to get the details
+         * from one of the places you get and show the data in UI
          * Always use runOnUiThread(new Runnable()) to update UI from background
-         * thread, otherwise you will get error
-         * **/
+         * thread, otherwise you may get error
+         **/
         protected void onPostExecute(String file_url) {
             // Get json response status
             String status = nearPlaces.status;
@@ -232,14 +262,12 @@ public class AddGeofenceActivity extends ActionBarActivity
                     //mCurrentLocation.setText(place.id);
                 }
             }
-            else {
-                // Zero results found
-            }
-
         }
-
     }
 
+    /**
+     * This Async Task will try to find the details of one of the places nearby
+     */
     class LoadPlaceDetails extends AsyncTask<String, String, String> {
 
         @Override
@@ -253,10 +281,6 @@ public class AddGeofenceActivity extends ActionBarActivity
         protected String doInBackground(String... args) {
             String reference = args[0];
 
-            // creating Places class object
-            //googlePlaces = new GooglePlaces();
-
-            // Check if user is connected to Internet
             try {
                 placeDetails = googlePlaces.getPlaceDetails(reference);
 
@@ -267,10 +291,9 @@ public class AddGeofenceActivity extends ActionBarActivity
         }
 
         /**
-         * After completing background task Dismiss the progress dialog
-         * and show the data in UI
+         * After completing background task show the data in UI
          * Always use runOnUiThread(new Runnable()) to update UI from background
-         * thread, otherwise you will get error
+         * thread, otherwise you might get error
          * **/
         protected void onPostExecute(String file_url) {
             // remove the progress bar after getting all products
@@ -300,26 +323,49 @@ public class AddGeofenceActivity extends ActionBarActivity
 
     }
 
+    /**
+     * To show the Help Activity
+     * @param view is the object by which it is invoked
+     */
     public void showHelpActivity(View view){
         Intent intentHelp = new Intent(this, DetailsHelpActivity.class);
         startActivity(intentHelp);
     }
 
+    /**
+     * To finish the activity
+     * @param view is the object by which it is invoked
+     */
     public void finishTheActivity(View view) {
         finish();
     }
 
+    /**
+     * Start adding geofences by giving the UI data to the MapsActivity as Result
+     * @param view is the object by which it is invoked
+     */
     public void addReminder(View view) {
+        // The intent which is gonna passed to the activity who called this activity for results
+        // In this case it is MapsActivity
         Intent intentReminder = new Intent();
-        intentReminder.putExtra("GeofenceData", "Data successfully acquired.");
-        intentReminder.putExtra("GeofenceName", txtName.getText().toString());
-        intentReminder.putExtra("GeofenceLat", Double.parseDouble(txtLatitude.getText().toString()));
-        intentReminder.putExtra("GeofenceLng", Double.parseDouble(txtLongitude.getText().toString()));
-        intentReminder.putExtra("GeofenceRad", Float.parseFloat(txtRadius.getText().toString()));
-        intentReminder.putExtra("GeofenceExp", Long.parseLong(txtExpirationDuration.getText().toString())
-                *GeofenceUtils.SECOND_PER_HOUR*GeofenceUtils.MILLISECONDS_PER_SECOND);
-        intentReminder.putExtra("GeofenceType", mType);
-        setResult(RESULT_OK, intentReminder);
-        finish();
+
+        if (isValidLatitudeValue(txtLatitude.getText().toString())
+                && isValidLongitudeValue(txtLongitude.getText().toString())
+                && isValidRadius(txtRadius.getText().toString())) {
+            intentReminder.putExtra("GeofenceData", "Data successfully acquired.");
+            intentReminder.putExtra("GeofenceName", txtName.getText().toString());
+            intentReminder.putExtra("GeofenceLat", Double.parseDouble(txtLatitude.getText().toString()));
+            intentReminder.putExtra("GeofenceLng", Double.parseDouble(txtLongitude.getText().toString()));
+            intentReminder.putExtra("GeofenceRad", Float.parseFloat(txtRadius.getText().toString()));
+            intentReminder.putExtra("GeofenceExp", Long.parseLong(txtExpirationDuration.getText().toString())
+                    * GeofenceUtils.SECOND_PER_HOUR * GeofenceUtils.MILLISECONDS_PER_SECOND);
+            intentReminder.putExtra("GeofenceType", mType);
+            // Set the intent as result
+            setResult(RESULT_OK, intentReminder);
+            // Finish the activity
+            finish();
+        } else {
+            Toast.makeText(this, "Check the inputs! There are errors!", Toast.LENGTH_LONG).show();
+        }
     }
 }

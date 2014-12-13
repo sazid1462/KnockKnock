@@ -1,6 +1,7 @@
 package com.shakeme.sazedul.knockknock;
 
 /**
+ * This is the Geofence requester class to add geofences
  * Created by Sazedul on 12-Dec-14.
  */
 
@@ -27,14 +28,11 @@ import java.util.List;
 
 /**
  * Class for connecting to Location Services and requesting geofences.
- * <b>
  * Note: Clients must ensure that Google Play services is available before requesting geofences.
- * </b> Use GooglePlayServicesUtil.isGooglePlayServicesAvailable() to check.
- *
+ * Use GooglePlayServicesUtil.isGooglePlayServicesAvailable() to check.
  *
  * To use a GeofenceRequester, instantiate it and call AddGeofence(). Everything else is done
  * automatically.
- *
  */
 public class GeofenceRequester
         implements

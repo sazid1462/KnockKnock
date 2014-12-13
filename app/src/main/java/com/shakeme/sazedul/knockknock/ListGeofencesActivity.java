@@ -1,9 +1,14 @@
 package com.shakeme.sazedul.knockknock;
 
+/**
+ * Activity Class for showing the added geofences whether they are expired or not
+ * Created by Sazedul on 06-Dec-14.
+ */
+
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,7 +21,7 @@ import java.util.Map;
 import java.util.Vector;
 
 
-public class ListGeofencesActivity extends ActionBarActivity
+public class ListGeofencesActivity extends Activity
         implements ListView.OnItemLongClickListener,
         ListView.OnItemClickListener {
 
@@ -73,15 +78,9 @@ public class ListGeofencesActivity extends ActionBarActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        else if (id == R.id.action_delete) {
+        if (id == R.id.action_delete) {
             Intent intentReminder = new Intent();
             intentReminder.putExtra("GeofenceDelete", "Data successfully acquired.");
-
-            System.err.println("CHECKED COUNT IS "+checkedCount);
 
             String checkedPosition[] = new String[checkedCount];
 
@@ -101,7 +100,6 @@ public class ListGeofencesActivity extends ActionBarActivity
             setResult(RESULT_OK, intentReminder);
             finish();
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -127,8 +125,6 @@ public class ListGeofencesActivity extends ActionBarActivity
             Intent intentReminder = new Intent();
             intentReminder.putExtra("GeofenceShow", "Data successfully acquired.");
 
-            System.err.println("ITEM AT POSITION " + parent.getItemAtPosition(position).toString());
-
             intentReminder.putExtra("GeofenceId", map.get(position));
             setResult(RESULT_OK, intentReminder);
             finish();
@@ -151,5 +147,32 @@ public class ListGeofencesActivity extends ActionBarActivity
             System.err.println("CHECKED COUNT IS "+checkedCount);
         }
         return true;
+    }
+
+    public void getBackToTheParentActivity(View view) {
+        finish();
+    }
+
+    public void deleteSelected(View view) {
+            Intent intentReminder = new Intent();
+            intentReminder.putExtra("GeofenceDelete", "Data successfully acquired.");
+
+            String checkedPosition[] = new String[checkedCount];
+
+            for (int i=0; i<checkedCount; i++) {
+                if (checkedItem[i]) {
+                    checkedPosition[i] = map.get(i);
+                }
+            }
+            intentReminder.putExtra("GeofenceIds", checkedPosition);
+            setResult(RESULT_OK, intentReminder);
+            finish();
+    }
+
+    public void clearAll(View view) {
+        Intent intentReminder = new Intent();
+        intentReminder.putExtra("GeofenceClear", "Clear All");
+        setResult(RESULT_OK, intentReminder);
+        finish();
     }
 }

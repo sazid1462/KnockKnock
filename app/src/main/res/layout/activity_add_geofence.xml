@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
+    android:background="@color/sky_blue"
     android:scrollbars="vertical"
     android:fillViewport="true">
     <LinearLayout android:layout_width="match_parent"

@@ -1,15 +1,53 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent" android:layout_width="match_parent"
+    android:layout_height="fill_parent" android:layout_width="match_parent"
     android:orientation="vertical"
     tools:context="com.shakeme.sazedul.knockknock.ListGeofencesActivity">
 
-    <ListView
-        android:id="@+id/geofence_list"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:scrollbars="vertical"
-        android:padding="@dimen/layout_padding_all">
+    <LinearLayout
+        style="?android:buttonBarStyle"
+        android:orientation="horizontal"
+        android:background="@color/wallet_holo_blue_light"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
 
-    </ListView>
+        <Button android:id="@+id/btn_delete"
+            android:text="@string/btn_delete"
+            android:textColor="@color/bright_foreground_material_light"
+            style="?android:buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:onClick="deleteSelected"
+            android:layout_height="wrap_content" />
+        <Button android:id="@+id/btn_clear"
+            android:text="@string/btn_clear"
+            android:textColor="@color/bright_foreground_material_light"
+            style="?android:buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:onClick="clearAll"
+            android:layout_height="wrap_content" />
+        <Button android:id="@+id/btn_return"
+            android:text="@string/btn_return"
+            android:textColor="@color/bright_foreground_material_light"
+            style="?android:buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:onClick="getBackToTheParentActivity"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        <ListView
+            android:id="@+id/geofence_list"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:scrollbars="vertical"
+            android:padding="@dimen/layout_padding_all">
+
+        </ListView>
+    </LinearLayout>
 </LinearLayout>

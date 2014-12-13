@@ -5,7 +5,6 @@ package com.shakeme.sazedul.knockknock;
  */
 
 import android.app.IntentService;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -67,7 +66,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
                     .putExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS, errorMessage);
 
             // Broadcast the error *locally* to other components in this app
-            LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
             // If there's no error, get the transition type and create a notification
         } else {
@@ -90,14 +89,25 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 }
                 String ids = TextUtils.join(GeofenceUtils.GEOFENCE_ID_DELIMITER, geofenceIds);
                 String transitionType = getTransitionString(transition);
+                String msg;
 
-                sendNotification(transitionType, ids);
+                if (transition==Geofence.GEOFENCE_TRANSITION_ENTER)
+                    msg = "You have entered in an area that you've set to be reminded!";
+                else msg = "You have exited an area that you've set to be reminded!";
+
+                sendNotification(transitionType, msg);
 
                 broadcastIntent.setAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION)
                         .putExtra(GeofenceUtils.EXTRA_GEOFENCE_ID, ids)
                         .putExtra(GeofenceUtils.EXTRA_GEOFENCE_TRANSITION_TYPE, transitionType);
 
-                LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
+                sendBroadcast(broadcastIntent);
+
+                Intent intentNotification = new Intent(this, NotificationActivity.class);
+                intentNotification.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intentNotification.putExtra(GeofenceUtils.EXTRA_NOTIFICATION_IDS, geofenceIds);
+                intentNotification.putExtra(GeofenceUtils.EXTRA_NOTIFICATION_TRANSITION, transitionType);
+                startActivity(intentNotification);
 
                 // Log the transition type and a message
                 Log.d(GeofenceUtils.APPTAG,
@@ -113,6 +123,10 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 // Always log as an error
                 Log.e(GeofenceUtils.APPTAG,
                         getString(R.string.geofence_transition_invalid_type, transition));
+                // Send a broadcast
+                broadcastIntent.setAction(GeofenceUtils.ACTION_GEOFENCE_TRANSITION_ERROR);
+
+                sendBroadcast(broadcastIntent);
             }
         }
     }
@@ -123,11 +137,11 @@ public class ReceiveTransitionsIntentService extends IntentService {
      * @param transitionType The type of transition that occurred.
      *
      */
-    private void sendNotification(String transitionType, String ids) {
+    private void sendNotification(String transitionType, String msg) {
         long when = System.currentTimeMillis();
         Intent notifyIntent = new Intent(this, MapsActivity.class);
         notifyIntent.putExtra("type", transitionType);
-        notifyIntent.putExtra("id", ids);
+        notifyIntent.putExtra("id", msg);
         notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -135,12 +149,12 @@ public class ReceiveTransitionsIntentService extends IntentService {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(getApplicationContext())
                         .setSmallIcon(R.drawable.ic_notification)
+                        .setCategory(NotificationCompat.CATEGORY_ALARM)
                         .setContentTitle(transitionType)
-                        .setContentText(ids)
+                        .setContentText(msg)
                         .setContentIntent(pendingIntent)
                         .setAutoCancel(true)
-                        .setCategory(GeofenceUtils.CATEGORY_LOCATION_SERVICES)
-                        .setDefaults(Notification.DEFAULT_SOUND)
+                        .setDefaults(NotificationCompat.DEFAULT_ALL)
                         .setWhen(when);
 
         NotificationManager notificationManager =

@@ -1,6 +1,7 @@
 package com.shakeme.sazedul.knockknock;
 
 /**
+ * This is the Geofence remover class to remove geofences
  * Created by Sazedul on 12-Dec-14.
  */
 
@@ -26,14 +27,10 @@ import java.util.List;
 
 /**
  * Class for connecting to Location Services and removing geofences.
- * <p>
- * <b>
  * Note: Clients must ensure that Google Play services is available before removing geofences.
- * </b> Use GooglePlayServicesUtil.isGooglePlayServicesAvailable() to check.
- * <p>
+ * Use GooglePlayServicesUtil.isGooglePlayServicesAvailable() to check.
  * To use a GeofenceRemover, instantiate it, then call either RemoveGeofencesById() or
  * RemoveGeofencesByIntent(). Everything else is done automatically.
- *
  */
 public class GeofenceRemover implements
         ConnectionCallbacks,
