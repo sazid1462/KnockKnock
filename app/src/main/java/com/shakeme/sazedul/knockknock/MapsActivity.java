@@ -24,8 +24,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -38,7 +41,8 @@ import java.util.List;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class MapsActivity extends FragmentActivity implements
-        GoogleMap.OnMapClickListener {
+        GoogleMap.OnMapClickListener, GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener {
 
     private static final String TAG = "MapActivity";
 
@@ -97,6 +101,8 @@ public class MapsActivity extends FragmentActivity implements
      */
     private GeofenceReceiver mBroadcastReceiver;
 
+    private boolean isFindingPlace;
+
     // An intent filter for the broadcast receiver
     private IntentFilter mIntentFilter;
 
@@ -110,6 +116,9 @@ public class MapsActivity extends FragmentActivity implements
     private static String triggeringGeofencesIds[];
     // Store the Triggering Geofences
     private static List<Geofence> triggeringGeofences;
+
+    private LocationClient locationClient;
+    private LocationRequest locationRequest;
 
     public static void setTriggeringGeofences(String ids[], List<Geofence> geofenceList) {
         triggeringGeofencesIds = ids;
@@ -157,11 +166,19 @@ public class MapsActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        int resp = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if (resp == ConnectionResult.SUCCESS) {
+            locationClient = new LocationClient(this, this, this);
+            locationClient.connect();
+        }
+
         // Set the pattern for the latitude and longitude format
         String latLngPattern = getString(R.string.lat_lng_pattern);
 
         // Set the format for latitude and longitude
         mLatLngFormat = new DecimalFormat(latLngPattern);
+
+        isFindingPlace = false;
 
         // Localize the format
         mLatLngFormat.applyLocalizedPattern(mLatLngFormat.toLocalizedPattern());
@@ -221,6 +238,12 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     protected void onStart() {
         super.onStart();
+        for (int i=0; i<GeofenceUtils.MAX_ID; i++) {
+            SimpleGeofence geofence = mPrefs.getGeofence(Integer.toString(i));
+            if (geofence != null) {
+                setAsActiveGeofence(Integer.parseInt(geofence.getId()));
+            }
+        }
     }
 
     @Override
@@ -268,7 +291,7 @@ public class MapsActivity extends FragmentActivity implements
          * Create an internal object to store the data. Get its ID by calling the getNextGeofenceID()
          * method and set it. This is a "flattened" object that contains a set of strings
          */
-        String id = MapsActivity.getNextGeofenceID();
+        String id = getNextGeofenceID();
         if (!id.matches("-1")) {
             SimpleGeofence mSimpleGeofence = new SimpleGeofence(id, name, latitude, longitude, radius,
                     expiration < 0 ? Geofence.NEVER_EXPIRE : expiration, type);
@@ -276,13 +299,13 @@ public class MapsActivity extends FragmentActivity implements
             mPrefs.setGeofence(mSimpleGeofence.getId(), mSimpleGeofence);
             mCurrentGeofences.add(mSimpleGeofence.toGeofence());
             // Store this flat version in SharedPreferences
-            mPrefs.setGeofence("1", mSimpleGeofence);
+            //mPrefs.setGeofence("1", mSimpleGeofence);
             /*
              * Add Geofence objects to a List. toGeofence()
              * creates a Location Services Geofence object from a
              * flat object
              */
-            mCurrentGeofences.add(mSimpleGeofence.toGeofence());
+            //mCurrentGeofences.add(mSimpleGeofence.toGeofence());
 
             // Start the request. Fail if there's already a request in progress
             try {
@@ -501,7 +524,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onMyLocationChange(Location location) {
                 currentLocation = location;
-                if (nCDetector.isConnectionToInternetAvailable()) {
+                if (nCDetector.isConnectionToInternetAvailable() && !isFindingPlace) {
                     new LoadPlaces().execute();
                 }
             }
@@ -526,6 +549,7 @@ public class MapsActivity extends FragmentActivity implements
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isFindingPlace = true;
         }
 
         /**
@@ -537,17 +561,10 @@ public class MapsActivity extends FragmentActivity implements
 
             try {
                 // Radius in meters - increase this value if you don't find any places
-                double radius = 80; // 80 meters
+                double radius = 100; // 80 meters
                 // Passing null as types will return all types of supported places found.
                 nearPlaces = googlePlaces.search(currentLocation.getLatitude(),
                         currentLocation.getLongitude(), radius, null);
-                // continue searching for places until finding any place and increase the searching radius up to 160 metres
-                for (int i=1; i<8 && nearPlaces==null; i++) {
-                    radius += 10;
-                    // get nearest places
-                    nearPlaces = googlePlaces.search(currentLocation.getLatitude(),
-                            currentLocation.getLongitude(), radius, null);
-                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -632,9 +649,9 @@ public class MapsActivity extends FragmentActivity implements
                             mCurrentLocation.setText("Could not find details.");
                         }
                     }
+                    isFindingPlace = false;
                 }
             });
-
         }
 
     }
@@ -733,6 +750,7 @@ public class MapsActivity extends FragmentActivity implements
                             ArrayList<String> geofencesToBeDelete = new ArrayList<>();
                             for (int i=0; i<ids.length; i++) {
                                 geofencesToBeDelete.add(ids[i]);
+                                setAsInactiveGeofence(Integer.parseInt(ids[i]));
                                 mPrefs.clearGeofence(ids[i]);
                             }
                             removeGeofences(geofencesToBeDelete);
@@ -810,6 +828,7 @@ public class MapsActivity extends FragmentActivity implements
              * here. The current design of the app uses a notification to inform the
              * user that a transition has occurred.
              */
+
         }
 
         /**
@@ -856,6 +875,30 @@ public class MapsActivity extends FragmentActivity implements
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             return mDialog;
+        }
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(5 * 50 * 1000);
+        locationRequest.setFastestInterval(5 * 50 * 1000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+    }
+
+    @Override
+    public void onDisconnected() {
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (null != locationClient) {
+            locationClient.disconnect();
         }
     }
 }

@@ -20,7 +20,6 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationClient.OnAddGeofencesResultListener;
 import com.google.android.gms.location.LocationStatusCodes;
-import com.shakeme.sazedul.knockknock.MapsActivity.GeofenceReceiver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -281,7 +280,9 @@ public class GeofenceRequester
         } else {
 
             // Create an Intent pointing to the IntentService
-            Intent intent = new Intent(mActivity, GeofenceReceiver.class);
+            //Intent intent = new Intent(mActivity, GeofenceReceiver.class); TODO
+            //Intent intent = new Intent(mActivity, GeofenceIntentService.class);
+            Intent intent = new Intent(mActivity, ReceiveTransitionsIntentService.class);
             /*
              * Return a PendingIntent to start the IntentService.
              * Always create a PendingIntent sent to Location Services

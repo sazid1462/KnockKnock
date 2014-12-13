@@ -43,7 +43,7 @@ public class ListGeofencesActivity extends ActionBarActivity
             if (geofence != null) {
                 list.add(geofence.getName());
                 map.put(i, geofence.getId());
-                System.err.println("ADDED GEOFENCE TO LIST VIEW "+geofence.getId()+" "+geofence.getName());
+                MapsActivity.setAsActiveGeofence(Integer.parseInt(geofence.getId()));
             }
         }
         checkedItem = new boolean[list.size()];

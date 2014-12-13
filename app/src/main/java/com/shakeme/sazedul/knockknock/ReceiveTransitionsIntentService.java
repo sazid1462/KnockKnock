@@ -5,12 +5,12 @@ package com.shakeme.sazedul.knockknock;
  */
 
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -118,41 +118,26 @@ public class ReceiveTransitionsIntentService extends IntentService {
      *
      */
     private void sendNotification(String transitionType, String ids) {
+        long when = System.currentTimeMillis();
+        Intent notifyIntent = new Intent(this, MapsActivity.class);
+        notifyIntent.putExtra("type", transitionType);
+        notifyIntent.putExtra("id", ids);
+        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        // Create an explicit content Intent that starts the main Activity
-        Intent notificationIntent =
-                new Intent(getApplicationContext(),MapsActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // Construct a task stack
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_notification)
+                        .setContentTitle(transitionType)
+                        .setContentText(ids)
+                        .setContentIntent(pendingIntent)
+                        .setDefaults(Notification.DEFAULT_SOUND)
+                        .setWhen(when);
 
-        // Adds the main Activity to the task stack as the parent
-        stackBuilder.addParentStack(MapsActivity.class);
-
-        // Push the content Intent onto the stack
-        stackBuilder.addNextIntent(notificationIntent);
-
-        // Get a PendingIntent containing the entire back stack
-        PendingIntent notificationPendingIntent =
-                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // Get a notification builder that's compatible with platform versions >= 4
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-
-        // Set the notification contents
-        builder.setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(
-                        getString(R.string.geofence_transition_notification_title,
-                                transitionType, ids))
-                .setContentText(getString(R.string.geofence_transition_notification_text))
-                .setContentIntent(notificationPendingIntent);
-
-        // Get an instance of the Notification manager
-        NotificationManager mNotificationManager =
+        NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        // Issue the notification
-        mNotificationManager.notify(0, builder.build());
+        notificationManager.notify((int) when, builder.build());
     }
 
     /**
